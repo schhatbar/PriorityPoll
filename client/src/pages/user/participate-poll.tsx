@@ -186,9 +186,13 @@ export default function ParticipatePoll() {
               <p className="text-gray-600 max-w-md mx-auto">
                 Thank you for participating in this poll. Your priorities have been registered.
               </p>
-              <Button className="mt-6" onClick={handleBack}>
-                Return to polls
-              </Button>
+              <div className="flex flex-col items-center gap-3 mt-6">
+                <p className="text-sm text-gray-500">Share this poll with others:</p>
+                <SharePoll pollId={pollId} pollTitle={poll.title} />
+                <Button className="mt-2" onClick={handleBack}>
+                  Return to polls
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
