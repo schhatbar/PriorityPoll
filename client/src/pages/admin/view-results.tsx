@@ -58,13 +58,15 @@ export default function ViewResults() {
   }
 
   // Format data for the chart
-  const chartData = Object.entries(poll.results).map(([option, points]) => ({
+  const chartData = poll.results ? Object.entries(poll.results).map(([option, points]) => ({
     name: option,
     points: points,
-  }));
+  })) : [];
 
   // Sort data by points (descending)
-  chartData.sort((a, b) => b.points - a.points);
+  if (chartData.length > 0) {
+    chartData.sort((a, b) => b.points - a.points);
+  }
   
   // Get poll options
   const pollOptions = poll.options as PollOption[];
