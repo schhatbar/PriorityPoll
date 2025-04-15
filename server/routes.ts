@@ -199,6 +199,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get votes by poll ID (admin only)
+  app.get("/api/polls/:id/votes", isAdmin, async (req, res) => {
+    try {
+      const pollId = parseInt(req.params.id);
+      if (isNaN(pollId)) {
+        return res.status(400).json({ message: "Invalid poll ID" });
+      }
+      
+      const votes = await storage.getVotesByPoll(pollId);
+      res.json(votes);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch votes" });
+    }
+  });
+
   // User routes (admin only)
   app.get("/api/users", isAdmin, async (req, res) => {
     try {
