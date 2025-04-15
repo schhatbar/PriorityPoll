@@ -20,9 +20,9 @@ import UserManagement from "@/pages/admin/user-management";
 function Router() {
   return (
     <Switch>
-      {/* User Routes */}
-      <ProtectedRoute path="/" component={PollList} />
-      <ProtectedRoute path="/polls/:id" component={ParticipatePoll} />
+      {/* Public Routes */}
+      <Route path="/" component={PollList} />
+      <Route path="/polls/:id" component={ParticipatePoll} />
       
       {/* Admin Routes */}
       <ProtectedRoute path="/admin" component={AdminDashboard} />
@@ -30,7 +30,7 @@ function Router() {
       <ProtectedRoute path="/admin/results/:id" component={ViewResults} />
       <ProtectedRoute path="/admin/users" component={UserManagement} />
       
-      {/* Auth Route */}
+      {/* Auth Route (only needed for admin login) */}
       <Route path="/auth" component={AuthPage} />
       
       {/* Fallback to 404 */}

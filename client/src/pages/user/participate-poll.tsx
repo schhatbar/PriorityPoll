@@ -8,14 +8,33 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { z } from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const voterSchema = z.object({
+  voterName: z.string().min(2, "Name must be at least 2 characters").max(50, "Name is too long")
+});
+
+type VoterFormValues = z.infer<typeof voterSchema>;
 
 export default function ParticipatePoll() {
   const { id } = useParams<{ id: string }>();
   const pollId = parseInt(id);
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const [voterName, setVoterName] = useState<string | null>(null);
+  
+  const form = useForm<VoterFormValues>({
+    resolver: zodResolver(voterSchema),
+    defaultValues: {
+      voterName: "",
+    },
+  });
 
   const { data: poll, isLoading: isPollLoading, error: pollError } = useQuery<Poll>({
     queryKey: [`/api/polls/${pollId}`],
@@ -23,14 +42,20 @@ export default function ParticipatePoll() {
 
   const { data: voteStatus, isLoading: isVoteStatusLoading } = useQuery<{ hasVoted: boolean }>({
     queryKey: [`/api/polls/${pollId}/has-voted`],
-    enabled: !!pollId && !isNaN(pollId),
+    queryFn: async () => {
+      if (!voterName) return { hasVoted: false };
+      return apiRequest("GET", `/api/polls/${pollId}/has-voted?voterName=${encodeURIComponent(voterName)}`)
+        .then(res => res.json());
+    },
+    enabled: !!pollId && !isNaN(pollId) && !!voterName,
   });
 
   const submitVoteMutation = useMutation({
-    mutationFn: async (rankings: PollRanking[]) => {
+    mutationFn: async (data: { rankings: PollRanking[], voterName: string }) => {
       await apiRequest("POST", "/api/votes", {
         pollId,
-        rankings,
+        rankings: data.rankings,
+        voterName: data.voterName
       });
     },
     onSuccess: () => {
@@ -50,14 +75,19 @@ export default function ParticipatePoll() {
   });
 
   const handleSubmit = (rankings: PollRanking[]) => {
-    submitVoteMutation.mutate(rankings);
+    if (!voterName) return;
+    submitVoteMutation.mutate({ rankings, voterName });
+  };
+
+  const onSubmitName = (values: VoterFormValues) => {
+    setVoterName(values.voterName);
   };
 
   const handleBack = () => {
     setLocation("/");
   };
 
-  if (isPollLoading || isVoteStatusLoading) {
+  if (isPollLoading) {
     return (
       <Layout>
         <div className="flex justify-center items-center h-64">
@@ -92,6 +122,47 @@ export default function ParticipatePoll() {
             Go Back
           </Button>
         </div>
+      </Layout>
+    );
+  }
+
+  if (!voterName) {
+    return (
+      <Layout>
+        <div className="mb-6 flex items-center">
+          <Button variant="ghost" onClick={handleBack} className="mr-3">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h2 className="text-xl font-semibold text-gray-800">Participate in Poll</h2>
+        </div>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>{poll.title}</CardTitle>
+            <p className="mt-1 text-sm text-gray-600">{poll.description}</p>
+          </CardHeader>
+          <CardContent>
+            <h3 className="text-lg font-medium mb-4">Enter your name to participate</h3>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmitName)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="voterName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Your Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter your name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit">Continue</Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
       </Layout>
     );
   }

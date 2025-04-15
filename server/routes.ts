@@ -133,7 +133,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Vote routes
   
   // Submit a vote
-  app.post("/api/votes", isAuthenticated, async (req, res) => {
+  app.post("/api/votes", async (req, res) => {
     try {
       const pollId = parseInt(req.body.pollId);
       if (isNaN(pollId)) {
@@ -150,16 +150,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "This poll is no longer active" });
       }
       
+      const { voterName } = req.body;
+      if (!voterName || typeof voterName !== 'string' || voterName.trim() === '') {
+        return res.status(400).json({ message: "Please provide your name to vote" });
+      }
+      
       // Check if user has already voted
-      const hasVoted = await storage.hasUserVoted(pollId, req.user!.id);
+      const hasVoted = await storage.hasUserVoted(pollId, voterName);
       if (hasVoted) {
         return res.status(400).json({ message: "You have already voted in this poll" });
       }
       
       // Validate vote
       const validatedData = insertVoteSchema.parse({
-        ...req.body,
-        userId: req.user!.id
+        pollId,
+        voterName,
+        rankings: req.body.rankings
       });
       
       const vote = await storage.createVote(validatedData);
@@ -174,14 +180,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Check if user has voted
-  app.get("/api/polls/:id/has-voted", isAuthenticated, async (req, res) => {
+  app.get("/api/polls/:id/has-voted", async (req, res) => {
     try {
       const pollId = parseInt(req.params.id);
       if (isNaN(pollId)) {
         return res.status(400).json({ message: "Invalid poll ID" });
       }
       
-      const hasVoted = await storage.hasUserVoted(pollId, req.user!.id);
+      const { voterName } = req.query;
+      if (!voterName || typeof voterName !== 'string') {
+        return res.status(400).json({ message: "Please provide a name to check vote status" });
+      }
+      
+      const hasVoted = await storage.hasUserVoted(pollId, voterName);
       res.json({ hasVoted });
     } catch (error) {
       res.status(500).json({ message: "Failed to check vote status" });
