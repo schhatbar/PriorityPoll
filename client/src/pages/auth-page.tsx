@@ -14,9 +14,20 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2 } from "lucide-react";
+import { 
+  Loader2, 
+  LogIn, 
+  UserPlus, 
+  LockIcon, 
+  UserIcon, 
+  ChevronRight,
+  CheckCircle2,
+  BarChart3,
+  Users 
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -72,31 +83,49 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex flex-col md:flex-row">
       {/* Left side - Form */}
-      <div className="w-full md:w-1/2 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">Priority Poll System</CardTitle>
+      <div className="w-full md:w-1/2 flex items-center justify-center p-4 md:p-8 lg:p-12">
+        <Card className="w-full max-w-md shadow-lg border-gray-200/80">
+          <CardHeader className="text-center pb-2">
+            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+              Priority Poll System
+            </CardTitle>
+            <CardDescription className="text-gray-500">
+              {activeTab === "login" ? "Admin Login" : "Create a new account"}
+            </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="register">Register</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 mb-8">
+                <TabsTrigger value="login" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Login
+                </TabsTrigger>
+                <TabsTrigger value="register" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Register
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="login">
                 <Form {...loginForm}>
-                  <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+                  <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-5">
                     <FormField
                       control={loginForm.control}
                       name="username"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Username</FormLabel>
+                          <FormLabel className="text-gray-700">Username</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter your username" {...field} />
+                            <div className="relative">
+                              <UserIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                              <Input 
+                                placeholder="Enter your username" 
+                                className="pl-10" 
+                                {...field} 
+                              />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -107,22 +136,40 @@ export default function AuthPage() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Password</FormLabel>
+                          <FormLabel className="text-gray-700">Password</FormLabel>
                           <FormControl>
-                            <Input type="password" placeholder="••••••••" {...field} />
+                            <div className="relative">
+                              <LockIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                              <Input 
+                                type="password" 
+                                placeholder="••••••••" 
+                                className="pl-10" 
+                                {...field} 
+                              />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
+                    <Button 
+                      type="submit" 
+                      className="w-full relative overflow-hidden group" 
+                      disabled={loginMutation.isPending}
+                    >
                       {loginMutation.isPending ? (
-                        <>
+                        <span className="flex items-center justify-center">
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           Logging in...
-                        </>
+                        </span>
                       ) : (
-                        "Sign In"
+                        <>
+                          <span className="flex items-center justify-center gap-1">
+                            Sign In 
+                            <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
+                          </span>
+                          <span className="absolute inset-0 bg-white/10 group-hover:bg-white/20 transition-all duration-300"></span>
+                        </>
                       )}
                     </Button>
                   </form>
@@ -131,15 +178,22 @@ export default function AuthPage() {
 
               <TabsContent value="register">
                 <Form {...registerForm}>
-                  <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                  <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-5">
                     <FormField
                       control={registerForm.control}
                       name="username"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Username</FormLabel>
+                          <FormLabel className="text-gray-700">Username</FormLabel>
                           <FormControl>
-                            <Input placeholder="Choose a username" {...field} />
+                            <div className="relative">
+                              <UserIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                              <Input 
+                                placeholder="Choose a username" 
+                                className="pl-10" 
+                                {...field} 
+                              />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -150,22 +204,39 @@ export default function AuthPage() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Password</FormLabel>
+                          <FormLabel className="text-gray-700">Password</FormLabel>
                           <FormControl>
-                            <Input type="password" placeholder="Choose a password" {...field} />
+                            <div className="relative">
+                              <LockIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                              <Input 
+                                type="password" 
+                                placeholder="Choose a password" 
+                                className="pl-10" 
+                                {...field} 
+                              />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
+                    <Button 
+                      type="submit" 
+                      className="w-full relative overflow-hidden group" 
+                      disabled={registerMutation.isPending}
+                    >
                       {registerMutation.isPending ? (
-                        <>
+                        <span className="flex items-center justify-center">
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           Creating account...
-                        </>
+                        </span>
                       ) : (
-                        "Create Account"
+                        <>
+                          <span className="flex items-center justify-center">
+                            Create Account
+                          </span>
+                          <span className="absolute inset-0 bg-white/10 group-hover:bg-white/20 transition-all duration-300"></span>
+                        </>
                       )}
                     </Button>
                   </form>
@@ -173,57 +244,87 @@ export default function AuthPage() {
               </TabsContent>
             </Tabs>
 
-            <div className="mt-6 text-center text-sm text-gray-500">
-              <p>Demo accounts:</p>
-              <p className="mt-1">Admin: username "admin", password "admin123"</p>
-              <p>User: username "user", password "user123"</p>
+            <div className="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-100 text-center">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Demo Accounts</h4>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between bg-white px-3 py-2 rounded border border-gray-100">
+                  <div className="flex items-center">
+                    <div className="bg-primary/10 p-1.5 rounded">
+                      <Users className="h-4 w-4 text-primary" />
+                    </div>
+                    <span className="ml-2 text-sm font-medium">Admin</span>
+                  </div>
+                  <div>
+                    <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">admin / admin123</code>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between bg-white px-3 py-2 rounded border border-gray-100">
+                  <div className="flex items-center">
+                    <div className="bg-gray-100 p-1.5 rounded">
+                      <UserIcon className="h-4 w-4 text-gray-500" />
+                    </div>
+                    <span className="ml-2 text-sm font-medium">User</span>
+                  </div>
+                  <div>
+                    <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">user / user123</code>
+                  </div>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Right side - Hero */}
-      <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-primary/90 to-primary p-12 flex-col justify-center">
-        <div className="max-w-md mx-auto">
-          <h1 className="text-4xl font-bold text-white mb-6">Priority Poll System</h1>
-          <p className="text-white/90 text-lg mb-8">
-            A powerful tool for creating and participating in priority-based polls. Rank your choices and make your voice heard.
+      <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-primary-900 via-primary to-primary-800 p-8 lg:p-12 flex-col justify-center">
+        <div className="max-w-lg mx-auto">
+          <div className="mb-6 bg-white/10 w-16 h-16 rounded-2xl flex items-center justify-center">
+            <BarChart3 className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-4xl font-bold text-white mb-6">
+            Priority Poll System
+          </h1>
+          <p className="text-white/90 text-lg mb-10 leading-relaxed">
+            A powerful tool for creating and participating in priority-based polls. 
+            Rank your choices and make your voice heard.
           </p>
-          <div className="space-y-4">
+          
+          <div className="space-y-6">
             <div className="flex items-start">
-              <div className="bg-white/20 p-2 rounded-full mr-3">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
+              <div className="bg-white/10 p-2 rounded-full mr-4 border border-white/20">
+                <CheckCircle2 className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h3 className="text-white font-medium">Priority-Based Voting</h3>
-                <p className="text-white/70">Rank options in order of importance</p>
+                <h3 className="text-white font-medium text-lg">Priority-Based Voting</h3>
+                <p className="text-white/70 mt-1">Rank options in order of importance with an intuitive drag-and-drop interface</p>
               </div>
             </div>
+            
             <div className="flex items-start">
-              <div className="bg-white/20 p-2 rounded-full mr-3">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
+              <div className="bg-white/10 p-2 rounded-full mr-4 border border-white/20">
+                <Users className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h3 className="text-white font-medium">Secure Role-Based Access</h3>
-                <p className="text-white/70">Admin and user roles with different permissions</p>
+                <h3 className="text-white font-medium text-lg">Secure Role-Based Access</h3>
+                <p className="text-white/70 mt-1">Admin and user roles with different permissions to manage polls</p>
               </div>
             </div>
+            
             <div className="flex items-start">
-              <div className="bg-white/20 p-2 rounded-full mr-3">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
-                  <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
-                </svg>
+              <div className="bg-white/10 p-2 rounded-full mr-4 border border-white/20">
+                <BarChart3 className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h3 className="text-white font-medium">Visual Results Analysis</h3>
-                <p className="text-white/70">Detailed charts and graphs for admins</p>
+                <h3 className="text-white font-medium text-lg">Visual Results Analysis</h3>
+                <p className="text-white/70 mt-1">Detailed charts and graphs for admins to analyze voting patterns</p>
               </div>
             </div>
+          </div>
+          
+          <div className="mt-12 pt-8 border-t border-white/10">
+            <p className="text-white/60 text-sm">
+              © {new Date().getFullYear()} Priority Poll System | Secure and easy priority-based polling
+            </p>
           </div>
         </div>
       </div>
