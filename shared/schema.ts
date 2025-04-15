@@ -15,13 +15,13 @@ export const polls = pgTable("polls", {
   description: text("description"),
   options: jsonb("options").notNull().$type<PollOption[]>(),
   active: boolean("active").notNull().default(true),
-  createdBy: integer("created_by").notNull(),
+  createdBy: integer("created_by").notNull().references(() => users.id),
   results: jsonb("results").$type<Record<string, number>>().default({}),
 });
 
 export const votes = pgTable("votes", {
   id: serial("id").primaryKey(),
-  pollId: integer("poll_id").notNull(),
+  pollId: integer("poll_id").notNull().references(() => polls.id),
   voterName: text("voter_name").notNull(),
   rankings: jsonb("rankings").notNull().$type<PollRanking[]>(),
 });

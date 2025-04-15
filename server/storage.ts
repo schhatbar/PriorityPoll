@@ -6,8 +6,12 @@ import {
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
+import connectPg from "connect-pg-simple";
+import { db, pool } from "./db";
+import { eq, and } from "drizzle-orm";
 
 const MemoryStore = createMemoryStore(session);
+const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
   // User operations
@@ -30,106 +34,119 @@ export interface IStorage {
   hasUserVoted(pollId: number, voterName: string): Promise<boolean>;
   
   // Session store
-  sessionStore: any; // Fixing type issue with session.SessionStore
+  sessionStore: any;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private polls: Map<number, Poll>;
-  private votes: Map<number, Vote>;
+export class DatabaseStorage implements IStorage {
   sessionStore: any;
-  private userIdCounter: number;
-  private pollIdCounter: number;
-  private voteIdCounter: number;
 
   constructor() {
-    this.users = new Map();
-    this.polls = new Map();
-    this.votes = new Map();
-    this.userIdCounter = 1;
-    this.pollIdCounter = 1;
-    this.voteIdCounter = 1;
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000 // prune expired entries every 24h
+    this.sessionStore = new PostgresSessionStore({ 
+      pool, 
+      createTableIfMissing: true 
     });
   }
 
   // User operations
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.userIdCounter++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values({
+        username: insertUser.username,
+        password: insertUser.password,
+        role: insertUser.role || 'user'
+      })
+      .returning();
     return user;
   }
 
   async getAllUsers(): Promise<User[]> {
-    return Array.from(this.users.values());
+    return db.select().from(users);
   }
 
   // Poll operations
   async createPoll(insertPoll: InsertPoll): Promise<Poll> {
-    const id = this.pollIdCounter++;
     // Initialize empty results object based on options
     const results: Record<string, number> = {};
-    insertPoll.options.forEach(option => {
+    const options = insertPoll.options as PollOption[];
+    options.forEach(option => {
       results[option.text] = 0;
     });
     
-    const poll: Poll = { 
-      ...insertPoll, 
-      id, 
-      results,
-      active: true 
-    };
-    this.polls.set(id, poll);
+    const [poll] = await db
+      .insert(polls)
+      .values({
+        title: insertPoll.title,
+        description: insertPoll.description || null,
+        options: insertPoll.options,
+        createdBy: insertPoll.createdBy,
+        results,
+        active: true
+      })
+      .returning();
+    
     return poll;
   }
 
   async getPoll(id: number): Promise<Poll | undefined> {
-    return this.polls.get(id);
+    const [poll] = await db.select().from(polls).where(eq(polls.id, id));
+    return poll;
   }
 
   async getAllPolls(): Promise<Poll[]> {
-    return Array.from(this.polls.values());
+    return db.select().from(polls);
   }
 
   async updatePollStatus(id: number, active: boolean): Promise<Poll | undefined> {
-    const poll = this.polls.get(id);
-    if (!poll) return undefined;
+    const [updatedPoll] = await db
+      .update(polls)
+      .set({ active })
+      .where(eq(polls.id, id))
+      .returning();
     
-    const updatedPoll = { ...poll, active };
-    this.polls.set(id, updatedPoll);
     return updatedPoll;
   }
 
   async updatePollResults(id: number, results: Record<string, number>): Promise<Poll | undefined> {
-    const poll = this.polls.get(id);
-    if (!poll) return undefined;
+    const [updatedPoll] = await db
+      .update(polls)
+      .set({ results })
+      .where(eq(polls.id, id))
+      .returning();
     
-    const updatedPoll = { ...poll, results };
-    this.polls.set(id, updatedPoll);
     return updatedPoll;
   }
 
   async deletePoll(id: number): Promise<boolean> {
-    return this.polls.delete(id);
+    const [deletedPoll] = await db
+      .delete(polls)
+      .where(eq(polls.id, id))
+      .returning();
+    
+    return !!deletedPoll;
   }
 
   // Vote operations
   async createVote(vote: InsertVote): Promise<Vote> {
-    const id = this.voteIdCounter++;
-    const newVote: Vote = { ...vote, id };
-    this.votes.set(id, newVote);
+    // Create the vote
+    const [newVote] = await db
+      .insert(votes)
+      .values({
+        pollId: vote.pollId,
+        voterName: vote.voterName,
+        rankings: vote.rankings
+      })
+      .returning();
     
     // Update poll results
     const poll = await this.getPoll(vote.pollId);
@@ -141,11 +158,13 @@ export class MemStorage implements IStorage {
       
       // Safely type the rankings array
       const typedRankings = vote.rankings as PollRanking[];
+      const pollOptions = poll.options as PollOption[];
+      
       typedRankings.forEach(({ optionId, rank }) => {
-        const option = poll.options.find(opt => opt.id === optionId);
+        const option = pollOptions.find(opt => opt.id === optionId);
         if (option) {
           const optionText = option.text;
-          const points = pointsForRank(rank, poll.options.length);
+          const points = pointsForRank(rank, pollOptions.length);
           results[optionText] = (results[optionText] || 0) + points;
         }
       });
@@ -157,14 +176,22 @@ export class MemStorage implements IStorage {
   }
 
   async getVotesByPoll(pollId: number): Promise<Vote[]> {
-    return Array.from(this.votes.values()).filter(vote => vote.pollId === pollId);
+    return db.select().from(votes).where(eq(votes.pollId, pollId));
   }
 
   async hasUserVoted(pollId: number, voterName: string): Promise<boolean> {
-    return Array.from(this.votes.values()).some(
-      vote => vote.pollId === pollId && vote.voterName === voterName
-    );
+    const [vote] = await db
+      .select()
+      .from(votes)
+      .where(
+        and(
+          eq(votes.pollId, pollId),
+          eq(votes.voterName, voterName)
+        )
+      );
+    
+    return !!vote;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
