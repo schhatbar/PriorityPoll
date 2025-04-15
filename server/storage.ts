@@ -27,17 +27,17 @@ export interface IStorage {
   // Vote operations
   createVote(vote: InsertVote): Promise<Vote>;
   getVotesByPoll(pollId: number): Promise<Vote[]>;
-  hasUserVoted(pollId: number, userId: number): Promise<boolean>;
+  hasUserVoted(pollId: number, voterName: string): Promise<boolean>;
   
   // Session store
-  sessionStore: session.SessionStore;
+  sessionStore: any; // Fixing type issue with session.SessionStore
 }
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private polls: Map<number, Poll>;
   private votes: Map<number, Vote>;
-  sessionStore: session.SessionStore;
+  sessionStore: any;
   private userIdCounter: number;
   private pollIdCounter: number;
   private voteIdCounter: number;
@@ -139,7 +139,9 @@ export class MemStorage implements IStorage {
       // Calculate points based on rankings (reverse order - highest rank gets most points)
       const pointsForRank = (rank: number, totalOptions: number) => totalOptions - rank + 1;
       
-      vote.rankings.forEach(({ optionId, rank }) => {
+      // Safely type the rankings array
+      const typedRankings = vote.rankings as PollRanking[];
+      typedRankings.forEach(({ optionId, rank }) => {
         const option = poll.options.find(opt => opt.id === optionId);
         if (option) {
           const optionText = option.text;
@@ -158,9 +160,9 @@ export class MemStorage implements IStorage {
     return Array.from(this.votes.values()).filter(vote => vote.pollId === pollId);
   }
 
-  async hasUserVoted(pollId: number, userId: number): Promise<boolean> {
+  async hasUserVoted(pollId: number, voterName: string): Promise<boolean> {
     return Array.from(this.votes.values()).some(
-      vote => vote.pollId === pollId && vote.userId === userId
+      vote => vote.pollId === pollId && vote.voterName === voterName
     );
   }
 }

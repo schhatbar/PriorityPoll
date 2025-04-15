@@ -22,7 +22,7 @@ const isAdmin = (req: Request, res: Response, next: Function) => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Set up authentication routes
+  // Set up authentication routes for admin access only
   setupAuth(app);
 
   // Poll routes
@@ -46,13 +46,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all polls
-  app.get("/api/polls", isAuthenticated, async (req, res) => {
+  // Get all polls - public access
+  app.get("/api/polls", async (req, res) => {
     try {
       const polls = await storage.getAllPolls();
       
       // If user is not admin, filter out inactive polls
-      if (req.user?.role !== "admin") {
+      if (!req.isAuthenticated() || req.user?.role !== "admin") {
         const activePolls = polls.filter(poll => poll.active);
         return res.json(activePolls);
       }
@@ -63,8 +63,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get a specific poll
-  app.get("/api/polls/:id", isAuthenticated, async (req, res) => {
+  // Get a specific poll - public access
+  app.get("/api/polls/:id", async (req, res) => {
     try {
       const pollId = parseInt(req.params.id);
       if (isNaN(pollId)) {
@@ -77,7 +77,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Only allow access to active polls unless user is admin
-      if (!poll.active && req.user?.role !== "admin") {
+      if (!poll.active && (!req.isAuthenticated() || req.user?.role !== "admin")) {
         return res.status(403).json({ message: "This poll is no longer active" });
       }
       

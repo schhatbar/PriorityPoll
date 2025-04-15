@@ -22,7 +22,7 @@ export const polls = pgTable("polls", {
 export const votes = pgTable("votes", {
   id: serial("id").primaryKey(),
   pollId: integer("poll_id").notNull(),
-  userId: integer("user_id").notNull(),
+  voterName: text("voter_name").notNull(),
   rankings: jsonb("rankings").notNull().$type<PollRanking[]>(),
 });
 
@@ -53,7 +53,7 @@ export const insertPollSchema = createInsertSchema(polls).pick({
 
 export const insertVoteSchema = createInsertSchema(votes).pick({
   pollId: true,
-  userId: true,
+  voterName: true,
   rankings: true,
 });
 
