@@ -3,6 +3,7 @@ import { useParams, useLocation } from "wouter";
 import { Poll, PollRanking } from "@shared/schema";
 import Layout from "@/components/layout/layout";
 import PriorityRanking from "@/components/priority-ranking";
+import SharePoll from "@/components/share-poll";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

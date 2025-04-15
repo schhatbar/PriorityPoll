@@ -2,12 +2,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
-import { ChartBar, Edit, Trash } from "lucide-react";
+import { ChartBar, Trash } from "lucide-react";
 import { Poll } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import SharePoll from "./share-poll";
 
 interface PollCardProps {
   poll: Poll;
@@ -74,7 +75,7 @@ export default function PollCard({ poll }: PollCardProps) {
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <CardTitle className="text-lg font-semibold text-gray-800">{poll.title}</CardTitle>
-          <Badge variant={poll.active ? "success" : "secondary"}>
+          <Badge variant={poll.active ? "default" : "secondary"}>
             {poll.active ? "Active" : "Inactive"}
           </Badge>
         </div>
@@ -86,7 +87,8 @@ export default function PollCard({ poll }: PollCardProps) {
         </div>
 
         {isAdmin ? (
-          <div className="flex space-x-2 justify-end">
+          <div className="flex flex-wrap gap-2 justify-end">
+            <SharePoll pollId={poll.id} pollTitle={poll.title} />
             <Button
               variant="outline"
               size="sm"
@@ -114,7 +116,8 @@ export default function PollCard({ poll }: PollCardProps) {
             </Button>
           </div>
         ) : (
-          <div className="flex justify-end">
+          <div className="flex flex-wrap gap-2 justify-end">
+            <SharePoll pollId={poll.id} pollTitle={poll.title} />
             <Button
               variant="default"
               size="sm"
