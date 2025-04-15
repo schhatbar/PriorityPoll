@@ -24,7 +24,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
         <h1 className="text-2xl font-semibold text-gray-800">Priority Poll System</h1>
 
-        {user && (
+        {user ? (
           <div className="flex items-center space-x-4">
             {/* Admin Navigation */}
             {isAdmin && (
@@ -69,6 +69,15 @@ export default function Navbar() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+          </div>
+        ) : (
+          <div className="flex items-center space-x-4">
+            <Link href="/">
+              <Button variant="ghost">View Polls</Button>
+            </Link>
+            <Link href="/auth">
+              <Button variant="outline">Admin Login</Button>
+            </Link>
           </div>
         )}
       </div>
