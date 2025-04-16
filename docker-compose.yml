@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/priority_poll_db
+      - SESSION_SECRET=your_secure_production_secret
+      - NODE_ENV=production
+    depends_on:
+      - db
+    restart: always
+    volumes:
+      - ./logs:/app/logs
+
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=priority_poll_db
+    ports:
+      - "5432:5432"
+    restart: always
+
+volumes:
+  postgres_data:
