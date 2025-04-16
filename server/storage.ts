@@ -178,9 +178,108 @@ export class DatabaseStorage implements IStorage {
       });
       
       await this.updatePollResults(poll.id, results);
+      
+      // Award gamification points to the voter
+      await this.awardPointsForVoting(vote.voterName, poll);
     }
     
     return newVote;
+  }
+  
+  // Helper method for awarding points when voting
+  private async awardPointsForVoting(voterName: string, poll: Poll): Promise<void> {
+    try {
+      // Base points for voting
+      const VOTE_POINTS = 10;
+      
+      // Get user's existing point record or create one if this is their first vote
+      const userPointsRecord = await this.getUserPoints(voterName);
+      
+      if (userPointsRecord) {
+        // Update vote count
+        const newVoteCount = userPointsRecord.votesCount + 1;
+        let totalPointsToAdd = VOTE_POINTS;
+        const achievements: string[] = [...(userPointsRecord.achievements as string[] || [])];
+        const badges: UserBadge[] = [...(userPointsRecord.badges as UserBadge[] || [])];
+        
+        // Check for voting streak achievements
+        if (newVoteCount === 1) {
+          // First vote achievement
+          achievements.push("First Vote");
+          badges.push({
+            id: "first-vote",
+            name: "First Vote",
+            description: "Participated in your first poll",
+            icon: "trophy",
+            earnedAt: new Date().toISOString()
+          });
+          
+          totalPointsToAdd += 5; // Bonus points for first vote
+        } else if (newVoteCount === 5) {
+          // 5 votes achievement
+          achievements.push("Active Voter");
+          badges.push({
+            id: "active-voter",
+            name: "Active Voter",
+            description: "Participated in 5 polls",
+            icon: "star",
+            earnedAt: new Date().toISOString()
+          });
+          
+          totalPointsToAdd += 20; // Bonus points for 5 votes milestone
+        } else if (newVoteCount === 10) {
+          // 10 votes achievement
+          achievements.push("Power Voter");
+          badges.push({
+            id: "power-voter",
+            name: "Power Voter",
+            description: "Participated in 10 polls",
+            icon: "award",
+            earnedAt: new Date().toISOString()
+          });
+          
+          totalPointsToAdd += 50; // Bonus points for 10 votes milestone
+        }
+        
+        // Update the user's points and achievements
+        await db
+          .update(userPoints)
+          .set({
+            points: userPointsRecord.points + totalPointsToAdd,
+            votesCount: newVoteCount,
+            lastVoteDate: new Date(),
+            achievements,
+            badges,
+            level: Math.floor((userPointsRecord.points + totalPointsToAdd) / 100) + 1
+          })
+          .where(eq(userPoints.voterName, voterName));
+      } else {
+        // First-time voter, create a new user points record
+        const now = new Date();
+        
+        await db
+          .insert(userPoints)
+          .values({
+            voterName,
+            points: VOTE_POINTS + 5, // Base points + first vote bonus
+            level: 1,
+            votesCount: 1,
+            firstVoteDate: now,
+            lastVoteDate: now,
+            achievements: ["First Vote"],
+            badges: [{
+              id: "first-vote",
+              name: "First Vote",
+              description: "Participated in your first poll",
+              icon: "trophy",
+              earnedAt: now.toISOString()
+            }]
+          });
+      }
+    } catch (error) {
+      console.error("Error awarding points:", error);
+      // We don't want to fail the vote if points can't be awarded
+    }
   }
 
   async getVotesByPoll(pollId: number): Promise<Vote[]> {

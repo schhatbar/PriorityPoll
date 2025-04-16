@@ -226,6 +226,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Gamification routes
+  
+  // Get leaderboard (public)
+  app.get("/api/leaderboard", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 10;
+      const topUsers = await storage.getTopUsers(limit);
+      res.json(topUsers);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch leaderboard" });
+    }
+  });
+
+  // Get user profile with points and achievements
+  app.get("/api/user-profile/:name", async (req, res) => {
+    try {
+      const voterName = req.params.name;
+      const userPoints = await storage.getUserPoints(voterName);
+      
+      if (!userPoints) {
+        return res.status(404).json({ message: "User profile not found" });
+      }
+      
+      res.json(userPoints);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch user profile" });
+    }
+  });
+
+  // Award achievement (admin only)
+  app.post("/api/user-profile/:name/achievements", isAdmin, async (req, res) => {
+    try {
+      const voterName = req.params.name;
+      const { achievement } = req.body;
+      
+      if (!achievement || typeof achievement !== 'string') {
+        return res.status(400).json({ message: "Invalid achievement" });
+      }
+      
+      const updatedProfile = await storage.addUserAchievement(voterName, achievement);
+      
+      if (!updatedProfile) {
+        return res.status(404).json({ message: "User profile not found" });
+      }
+      
+      res.json(updatedProfile);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to award achievement" });
+    }
+  });
+
+  // Award badge (admin only)
+  app.post("/api/user-profile/:name/badges", isAdmin, async (req, res) => {
+    try {
+      const voterName = req.params.name;
+      const { badge } = req.body;
+      
+      if (!badge || typeof badge !== 'object' || !badge.id || !badge.name) {
+        return res.status(400).json({ message: "Invalid badge data" });
+      }
+      
+      const updatedProfile = await storage.addUserBadge(voterName, badge);
+      
+      if (!updatedProfile) {
+        return res.status(404).json({ message: "User profile not found" });
+      }
+      
+      res.json(updatedProfile);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to award badge" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

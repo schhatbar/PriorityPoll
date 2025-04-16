@@ -10,6 +10,8 @@ import { AuthProvider } from "@/hooks/use-auth";
 // User Pages
 import PollList from "@/pages/user/poll-list";
 import ParticipatePoll from "@/pages/user/participate-poll";
+import Leaderboard from "@/pages/user/leaderboard";
+import UserProfile from "@/pages/user/user-profile";
 
 // Admin Pages
 import AdminDashboard from "@/pages/admin/dashboard";
@@ -23,6 +25,8 @@ function Router() {
       {/* Public Routes */}
       <Route path="/" component={PollList} />
       <Route path="/polls/:id" component={ParticipatePoll} />
+      <Route path="/leaderboard" component={Leaderboard} />
+      <Route path="/user-profile/:name" component={UserProfile} />
       
       {/* Admin Routes */}
       <ProtectedRoute path="/admin" component={AdminDashboard} />
