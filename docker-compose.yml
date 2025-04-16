@@ -1,8 +1,12 @@
-version: '3'
+version: '3.8'
 
 services:
+  # Node.js + React Application
   app:
-    build: .
+    build:
+      context: .
+      target: production
+    container_name: priority-poll-app
     ports:
       - "5000:5000"
     environment:
@@ -11,12 +15,21 @@ services:
       - NODE_ENV=production
     depends_on:
       - db
-    restart: always
+    restart: unless-stopped
     volumes:
       - ./logs:/app/logs
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
+  # PostgreSQL Database
   db:
     image: postgres:15-alpine
+    container_name: priority-poll-db
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
@@ -25,7 +38,37 @@ services:
       - POSTGRES_DB=priority_poll_db
     ports:
       - "5432:5432"
-    restart: always
+    restart: unless-stopped
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # pgAdmin for Database Management
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: priority-poll-pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+      - PGADMIN_CONFIG_SERVER_MODE=False
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    restart: unless-stopped
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - app-network
 
 volumes:
   postgres_data:
+  pgadmin_data:
+
+networks:
+  app-network:
+    driver: bridge
