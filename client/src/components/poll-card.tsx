@@ -77,12 +77,12 @@ export default function PollCard({ poll }: PollCardProps) {
         "pb-2 border-b",
         poll.active ? "border-green-100" : "border-gray-100"
       )}>
-        <div className="flex justify-between items-start gap-2">
-          <CardTitle className="text-lg font-semibold text-gray-800">{poll.title}</CardTitle>
+        <div className="flex flex-wrap justify-between items-start gap-1">
+          <CardTitle className="text-base sm:text-lg font-semibold text-gray-800">{poll.title}</CardTitle>
           <Badge 
             variant={poll.active ? "default" : "secondary"}
             className={cn(
-              "transition-colors",
+              "transition-colors shrink-0",
               poll.active ? "bg-green-100 text-green-800 hover:bg-green-200" : ""
             )}
           >
@@ -90,17 +90,17 @@ export default function PollCard({ poll }: PollCardProps) {
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="py-4 flex-grow">
-        <p className="text-sm text-gray-600 mb-4">
+      <CardContent className="py-3 sm:py-4 flex-grow">
+        <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
           {poll.description}
         </p>
-        <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+        <div className="flex flex-wrap gap-2 sm:gap-3 text-xs text-gray-500">
           <div className="flex items-center">
-            <ListChecks className="h-3.5 w-3.5 mr-1 text-gray-400" />
+            <ListChecks className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 text-gray-400" />
             <span>{poll.options.length} options</span>
           </div>
           <div className="flex items-center">
-            <Clock className="h-3.5 w-3.5 mr-1 text-gray-400" />
+            <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 text-gray-400" />
             <span>Created {new Date(poll.id * 1000).toLocaleDateString()}</span>
           </div>
         </div>
@@ -114,21 +114,23 @@ export default function PollCard({ poll }: PollCardProps) {
               variant="outline"
               size="sm"
               asChild
-              className="border-blue-200 text-blue-700 hover:bg-blue-50"
+              className="border-blue-200 text-blue-700 hover:bg-blue-50 text-xs sm:text-sm"
             >
               <Link href={`/admin/results/${poll.id}`}>
-                <ChartBar className="h-4 w-4 mr-1" />
-                Results
+                <ChartBar className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                <span className="sm:inline">Results</span>
               </Link>
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={handleToggleStatus}
-              className={poll.active 
-                ? "border-amber-200 text-amber-700 hover:bg-amber-50" 
-                : "border-green-200 text-green-700 hover:bg-green-50"
-              }
+              className={cn(
+                "text-xs sm:text-sm",
+                poll.active 
+                  ? "border-amber-200 text-amber-700 hover:bg-amber-50" 
+                  : "border-green-200 text-green-700 hover:bg-green-50"
+              )}
             >
               {poll.active ? "Deactivate" : "Activate"}
             </Button>
@@ -136,10 +138,10 @@ export default function PollCard({ poll }: PollCardProps) {
               variant="destructive"
               size="sm"
               onClick={handleDelete}
-              className="bg-red-100 text-red-700 hover:bg-red-200 hover:text-red-800"
+              className="bg-red-100 text-red-700 hover:bg-red-200 hover:text-red-800 text-xs sm:text-sm"
             >
-              <Trash className="h-4 w-4 mr-1" />
-              Delete
+              <Trash className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+              <span className="sm:inline">Delete</span>
             </Button>
           </div>
         ) : (
@@ -150,7 +152,7 @@ export default function PollCard({ poll }: PollCardProps) {
                 variant="default"
                 size="sm"
                 asChild
-                className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary"
+                className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-xs sm:text-sm"
               >
                 <Link href={`/polls/${poll.id}`}>
                   Participate
@@ -161,7 +163,7 @@ export default function PollCard({ poll }: PollCardProps) {
                 variant="outline"
                 size="sm"
                 disabled
-                className="cursor-not-allowed opacity-60"
+                className="cursor-not-allowed opacity-60 text-xs sm:text-sm"
               >
                 Poll Closed
               </Button>
