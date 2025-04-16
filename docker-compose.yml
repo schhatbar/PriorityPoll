@@ -25,6 +25,8 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    # If you need to debug the build process
+    # command: ["node", "--inspect=0.0.0.0:9229", "dist/index.js"]
 
   # PostgreSQL Database
   db:

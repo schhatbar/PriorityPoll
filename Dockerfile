@@ -28,9 +28,8 @@ COPY package*.json ./
 # Install production dependencies only
 RUN npm ci --omit=dev
 
-# Copy built files from build stage
+# Copy built files from build stage - this includes both backend and frontend
 COPY --from=build /app/dist ./dist
-COPY --from=build /app/client/dist ./client/dist
 
 # Expose the port
 EXPOSE 5000
