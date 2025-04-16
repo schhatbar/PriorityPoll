@@ -2,13 +2,24 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
 import { Poll, Vote, PollOption, PollRanking } from "@shared/schema";
 import Layout from "@/components/layout/layout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, Clock, User, Award } from "lucide-react";
+import { ArrowLeft, Loader2, Clock, User, Award, Trophy, Medal, List, Calendar, CheckCircle, CheckCircle2, Users, UserCheck } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export default function ViewResults() {
   const { id } = useParams<{ id: string }>();
@@ -159,47 +170,133 @@ export default function ViewResults() {
             </TabsContent>
             
             <TabsContent value="individual">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">Individual Voter Rankings</h3>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <UserCheck className="h-5 w-5 text-primary/70" />
+                  <h3 className="font-medium text-gray-800">Individual Voter Data</h3>
+                </div>
+                <Badge variant="outline" className="bg-primary/5">
+                  <Users className="h-3.5 w-3.5 mr-1.5" />
+                  {votes?.length || 0} voters
+                </Badge>
+              </div>
+              
+              <Separator className="my-4" />
               
               {!votes || votes.length === 0 ? (
-                <div className="text-center py-10">
-                  <p className="text-gray-600">No votes have been recorded for this poll yet.</p>
+                <div className="text-center py-10 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                  <div className="flex flex-col items-center gap-2">
+                    <Users className="h-10 w-10 text-gray-300" />
+                    <h3 className="text-base font-medium text-gray-500">No votes yet</h3>
+                    <p className="text-gray-400 text-sm">No votes have been recorded for this poll.</p>
+                  </div>
                 </div>
               ) : (
-                <div className="mt-4 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
                   {votes.map((vote) => {
                     const rankings = vote.rankings as PollRanking[];
                     // Sort by rank (ascending)
                     const sortedRankings = [...rankings].sort((a, b) => a.rank - b.rank);
                     
+                    // Get initials for avatar
+                    const initials = vote.voterName
+                      .split(' ')
+                      .map(n => n[0])
+                      .join('')
+                      .toUpperCase()
+                      .substring(0, 2);
+                      
+                    // Get top 3 choices
+                    const topChoices = sortedRankings.slice(0, 3);
+                    
                     return (
-                      <Card key={vote.id} className="overflow-hidden">
-                        <CardHeader className="bg-gray-50 py-3">
-                          <div className="flex items-center">
-                            <User className="h-5 w-5 mr-2 text-gray-500" />
-                            <CardTitle className="text-base">{vote.voterName}</CardTitle>
+                      <Card key={vote.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                        <CardHeader className="pb-3">
+                          <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-10 w-10 border border-primary/10 bg-primary/5">
+                                <AvatarFallback className="bg-primary/10 text-primary/80 font-medium">
+                                  {initials}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <CardTitle className="text-base">{vote.voterName}</CardTitle>
+                                <CardDescription className="text-xs">
+                                  Voted {new Date(vote.id * 1000).toLocaleDateString()}
+                                </CardDescription>
+                              </div>
+                            </div>
+                            <Badge 
+                              variant="outline" 
+                              className="bg-green-50 text-green-700 border-green-100"
+                            >
+                              <CheckCircle2 className="h-3 w-3 mr-1" />
+                              Complete
+                            </Badge>
                           </div>
                         </CardHeader>
-                        <CardContent className="py-4">
-                          <div className="space-y-2">
-                            {sortedRankings.map((ranking, idx) => (
-                              <div key={idx} className="flex items-center py-1">
-                                <Badge variant={ranking.rank === 1 ? "default" : "outline"} className="mr-3 w-8 text-center">
-                                  {ranking.rank === 1 ? (
-                                    <div className="flex items-center justify-center">
-                                      <Award className="h-3 w-3 mr-1" /> 1
-                                    </div>
-                                  ) : (
-                                    ranking.rank
-                                  )}
-                                </Badge>
-                                <span className="text-sm font-medium">
-                                  {getOptionTextById(ranking.optionId)}
-                                </span>
-                              </div>
-                            ))}
+
+                        <CardContent className="p-0">
+                          <div className="px-6 py-3 bg-gray-50 border-y border-gray-100">
+                            <div className="flex items-center gap-2">
+                              <Trophy className="h-4 w-4 text-amber-500" />
+                              <h4 className="text-sm font-medium text-gray-700">Priority Ranking</h4>
+                            </div>
+                          </div>
+                          
+                          <div className="p-3">
+                            <Table>
+                              <TableHeader className="bg-gray-50/50">
+                                <TableRow>
+                                  <TableHead className="w-20">Rank</TableHead>
+                                  <TableHead>Option</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {sortedRankings.map((ranking, idx) => (
+                                  <TableRow key={idx} className={idx < 3 ? "bg-primary/[.03]" : ""}>
+                                    <TableCell className="py-2">
+                                      {idx === 0 && (
+                                        <Badge className="bg-amber-100 text-amber-700 border-amber-200 font-medium">
+                                          <Trophy className="h-3 w-3 mr-1 text-amber-500" />
+                                          1st
+                                        </Badge>
+                                      )}
+                                      {idx === 1 && (
+                                        <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200">
+                                          2nd
+                                        </Badge>
+                                      )}
+                                      {idx === 2 && (
+                                        <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200">
+                                          3rd
+                                        </Badge>
+                                      )}
+                                      {idx > 2 && (
+                                        <span className="text-xs text-gray-500 font-medium ml-1">
+                                          {ranking.rank}
+                                        </span>
+                                      )}
+                                    </TableCell>
+                                    <TableCell className={cn(
+                                      "py-2 text-sm",
+                                      idx < 3 ? "font-medium" : "text-gray-700"
+                                    )}>
+                                      {getOptionTextById(ranking.optionId)}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
                           </div>
                         </CardContent>
+                        
+                        <CardFooter className="flex justify-between items-center py-3 bg-gray-50/50 border-t border-gray-100">
+                          <div className="text-xs text-gray-500 flex items-center">
+                            <List className="h-3.5 w-3.5 mr-1.5 text-gray-400" />
+                            {sortedRankings.length} options ranked
+                          </div>
+                        </CardFooter>
                       </Card>
                     );
                   })}
