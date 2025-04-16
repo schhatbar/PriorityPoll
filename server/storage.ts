@@ -2,7 +2,8 @@ import {
   users, type User, type InsertUser,
   polls, type Poll, type InsertPoll,
   votes, type Vote, type InsertVote,
-  PollOption, PollRanking
+  userPoints, type UserPoints, type InsertUserPoints,
+  PollOption, PollRanking, UserBadge
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -32,6 +33,13 @@ export interface IStorage {
   createVote(vote: InsertVote): Promise<Vote>;
   getVotesByPoll(pollId: number): Promise<Vote[]>;
   hasUserVoted(pollId: number, voterName: string): Promise<boolean>;
+  
+  // Gamification operations
+  getUserPoints(voterName: string): Promise<UserPoints | undefined>;
+  updateUserPoints(voterName: string, pointsToAdd: number): Promise<UserPoints>;
+  addUserAchievement(voterName: string, achievement: string): Promise<UserPoints | undefined>;
+  addUserBadge(voterName: string, badge: UserBadge): Promise<UserPoints | undefined>;
+  getTopUsers(limit?: number): Promise<UserPoints[]>;
   
   // Session store
   sessionStore: any;
@@ -191,6 +199,115 @@ export class DatabaseStorage implements IStorage {
       );
     
     return !!vote;
+  }
+
+  // Gamification operations
+  async getUserPoints(voterName: string): Promise<UserPoints | undefined> {
+    const [userPointsRecord] = await db
+      .select()
+      .from(userPoints)
+      .where(eq(userPoints.voterName, voterName));
+    
+    return userPointsRecord;
+  }
+
+  async updateUserPoints(voterName: string, pointsToAdd: number): Promise<UserPoints> {
+    // Get existing user points or create a new record
+    const existingPoints = await this.getUserPoints(voterName);
+    
+    if (existingPoints) {
+      // Update existing record
+      const newPoints = existingPoints.points + pointsToAdd;
+      const newLevel = Math.floor(newPoints / 100) + 1; // Simple level calculation: 1 level per 100 points
+      
+      const [updatedPoints] = await db
+        .update(userPoints)
+        .set({ 
+          points: newPoints,
+          level: newLevel,
+          lastVoteDate: new Date()
+        })
+        .where(eq(userPoints.voterName, voterName))
+        .returning();
+      
+      return updatedPoints;
+    } else {
+      // Create new record
+      const newLevel = Math.floor(pointsToAdd / 100) + 1;
+      const now = new Date();
+      
+      const [newUserPoints] = await db
+        .insert(userPoints)
+        .values({
+          voterName,
+          points: pointsToAdd,
+          level: newLevel,
+          votesCount: 1,
+          firstVoteDate: now,
+          lastVoteDate: now
+        })
+        .returning();
+      
+      return newUserPoints;
+    }
+  }
+
+  async addUserAchievement(voterName: string, achievement: string): Promise<UserPoints | undefined> {
+    const existingPoints = await this.getUserPoints(voterName);
+    
+    if (!existingPoints) {
+      return undefined;
+    }
+    
+    const achievements = [...(existingPoints.achievements as string[] || [])];
+    
+    // Only add if it doesn't already exist
+    if (!achievements.includes(achievement)) {
+      achievements.push(achievement);
+      
+      const [updatedPoints] = await db
+        .update(userPoints)
+        .set({ achievements })
+        .where(eq(userPoints.voterName, voterName))
+        .returning();
+      
+      return updatedPoints;
+    }
+    
+    return existingPoints;
+  }
+
+  async addUserBadge(voterName: string, badge: UserBadge): Promise<UserPoints | undefined> {
+    const existingPoints = await this.getUserPoints(voterName);
+    
+    if (!existingPoints) {
+      return undefined;
+    }
+    
+    const badges = [...(existingPoints.badges as UserBadge[] || [])];
+    
+    // Check if badge with this ID already exists
+    if (!badges.some(b => b.id === badge.id)) {
+      badges.push(badge);
+      
+      const [updatedPoints] = await db
+        .update(userPoints)
+        .set({ badges })
+        .where(eq(userPoints.voterName, voterName))
+        .returning();
+      
+      return updatedPoints;
+    }
+    
+    return existingPoints;
+  }
+
+  async getTopUsers(limit: number = 10): Promise<UserPoints[]> {
+    return db
+      .select()
+      .from(userPoints)
+      .orderBy(userPoints.points, "desc")
+      .limit(limit);
   }
 }
 
