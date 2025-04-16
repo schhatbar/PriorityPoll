@@ -97,7 +97,7 @@ export class DatabaseStorage implements IStorage {
         title: insertPoll.title,
         description: insertPoll.description || null,
         options: insertPoll.options,
-        createdBy: insertPoll.createdBy,
+        created_by: insertPoll.createdBy,
         results,
         active: true
       })
@@ -146,15 +146,19 @@ export class DatabaseStorage implements IStorage {
 
   // Vote operations
   async createVote(vote: InsertVote): Promise<Vote> {
+    console.log("Creating vote with data:", vote);
+    
     // Create the vote
     const [newVote] = await db
       .insert(votes)
       .values({
-        pollId: vote.pollId,
-        voterName: vote.voterName,
+        poll_id: vote.pollId,
+        voter_name: vote.voterName,
         rankings: vote.rankings
       })
       .returning();
+    
+    console.log("Vote created:", newVote);
     
     // Update poll results
     const poll = await this.getPoll(vote.pollId);
@@ -283,21 +287,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getVotesByPoll(pollId: number): Promise<Vote[]> {
-    return db.select().from(votes).where(eq(votes.pollId, pollId));
+    return db.select().from(votes).where(eq(votes.poll_id, pollId));
   }
 
   async hasUserVoted(pollId: number, voterName: string): Promise<boolean> {
-    const [vote] = await db
-      .select()
-      .from(votes)
-      .where(
-        and(
-          eq(votes.pollId, pollId),
-          eq(votes.voterName, voterName)
-        )
-      );
-    
-    return !!vote;
+    console.log("Checking if user has voted:", { pollId, voterName });
+    try {
+      const [vote] = await db
+        .select()
+        .from(votes)
+        .where(
+          and(
+            eq(votes.pollId, pollId),
+            eq(votes.voterName, voterName)
+          )
+        );
+      
+      console.log("Has voted result:", !!vote);
+      return !!vote;
+    } catch (error) {
+      console.error("Error checking if user has voted:", error);
+      throw error;
+    }
   }
 
   // Gamification operations
