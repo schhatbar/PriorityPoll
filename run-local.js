@@ -55,27 +55,80 @@ if (!env.DATABASE_URL) {
   process.exit(1);
 }
 
+// If no port is specified, use 5000 as default
+// If port 5000 is in use, common alternatives are 3000, 8000, or 8080
+if (!env.PORT) {
+  env.PORT = '5000';
+  console.log(`Setting default PORT to ${env.PORT}`);
+}
+
 console.log('\x1b[32m%s\x1b[0m', '✓ Environment variables loaded successfully');
 console.log(`DATABASE_URL is ${env.DATABASE_URL ? 'set' : 'not set'}`);
 console.log(`NODE_ENV is set to ${env.NODE_ENV || 'not set'}`);
+console.log(`PORT is set to ${env.PORT}`);
 
-// Start the server
+// Start the server with port conflict handling
 console.log('\x1b[36m%s\x1b[0m', 'Starting Express server and React frontend...');
 
-const server = spawn('npx', ['tsx', 'server/index.ts'], { 
-  env,
-  stdio: 'inherit',
-  shell: true
-});
+let serverStarted = false;
+let server;
+
+// List of alternative ports to try if the primary port is in use
+const alternativePorts = ['3000', '8000', '8080', '9000'];
+let currentPortIndex = -1; // Start with the configured port
+
+function startServer() {
+  server = spawn('npx', ['tsx', 'server/index.ts'], { 
+    env,
+    stdio: ['inherit', 'inherit', 'pipe'], // Pipe stderr so we can detect port conflicts
+    shell: true
+  });
+
+  // Listen for successful start or errors
+  server.stderr.on('data', (data) => {
+    const output = data.toString();
+    
+    // Check for port conflict (EADDRINUSE)
+    if (output.includes('EADDRINUSE') && currentPortIndex < alternativePorts.length) {
+      console.log('\x1b[33m%s\x1b[0m', `Port ${env.PORT} is already in use!`);
+      
+      // Try next alternative port
+      currentPortIndex++;
+      if (currentPortIndex < alternativePorts.length) {
+        env.PORT = alternativePorts[currentPortIndex];
+        console.log('\x1b[36m%s\x1b[0m', `Trying alternative port: ${env.PORT}`);
+        
+        // Kill the current server and start a new one
+        server.kill();
+        setTimeout(startServer, 1000);
+      } else {
+        console.error('\x1b[31m%s\x1b[0m', 'ERROR: All ports are in use! Please free a port or specify a custom PORT in .env file.');
+        process.exit(1);
+      }
+    } else {
+      // Pass through other stderr output
+      process.stderr.write(data);
+    }
+  });
+
+  // Flag as started when no errors after a short delay
+  setTimeout(() => {
+    if (server.exitCode === null) { // Still running
+      serverStarted = true;
+      console.log('\x1b[32m%s\x1b[0m', `
+✓ Server is running at http://localhost:${env.PORT}
+✓ Access the application in your browser
+`);
+    }
+  }, 2000);
+}
+
+// Start the server with the initial port
+startServer();
 
 // Handle graceful shutdown
 process.on('SIGINT', () => {
   console.log('\n\x1b[36m%s\x1b[0m', 'Shutting down...');
-  server.kill('SIGINT');
+  if (server) server.kill('SIGINT');
   process.exit(0);
 });
-
-console.log('\x1b[32m%s\x1b[0m', `
-✓ Server is running at http://localhost:${env.PORT || 5000}
-✓ Access the application in your browser
-`);
