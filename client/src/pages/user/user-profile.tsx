@@ -115,7 +115,11 @@ export default function UserProfile() {
                 </Avatar>
                 <div>
                   <h1 className="text-2xl font-bold">{userPoints.voterName}</h1>
-                  <p className="text-muted-foreground">Joined {new Date(userPoints.createdAt).toLocaleDateString()}</p>
+                  <p className="text-muted-foreground">
+                    {userPoints.firstVoteDate ? 
+                      `First vote: ${new Date(userPoints.firstVoteDate).toLocaleDateString()}` : 
+                      "No votes yet"}
+                  </p>
                 </div>
               </div>
               

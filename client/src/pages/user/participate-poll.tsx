@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useParams, useLocation } from "wouter";
+import { useParams, useLocation, Link } from "wouter";
 import { Poll, PollRanking } from "@shared/schema";
 import Layout from "@/components/layout/layout";
 import PriorityRanking from "@/components/priority-ranking";
@@ -7,7 +7,7 @@ import SharePoll from "@/components/share-poll";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle2, Trophy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
@@ -60,11 +60,17 @@ export default function ParticipatePoll() {
       });
     },
     onSuccess: () => {
+      // Show success toast with gamification message
       toast({
-        title: "Vote submitted!",
-        description: "Your ranking has been recorded successfully.",
+        title: "Vote submitted! +10 points",
+        description: "Your ranking has been recorded successfully. You earned points for voting!",
       });
+      
+      // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: [`/api/polls/${pollId}/has-voted`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/leaderboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user-points", voterName] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user-votes", voterName] });
     },
     onError: (error) => {
       toast({
@@ -186,12 +192,33 @@ export default function ParticipatePoll() {
               <p className="text-gray-600 max-w-md mx-auto">
                 Thank you for participating in this poll. Your priorities have been registered.
               </p>
+              
+              {submitVoteMutation.isSuccess && (
+                <div className="mt-4 p-3 bg-green-50 border border-green-100 rounded-lg max-w-md mx-auto">
+                  <div className="flex items-center justify-center mb-2">
+                    <Trophy className="h-5 w-5 text-yellow-500 mr-2" />
+                    <span className="font-medium text-green-800">+10 points earned!</span>
+                  </div>
+                  <p className="text-sm text-green-700">
+                    You've earned points for voting. Check the <a href="/leaderboard" className="underline font-medium">leaderboard</a> to see your ranking!
+                  </p>
+                </div>
+              )}
+              
               <div className="flex flex-col items-center gap-3 mt-6">
                 <p className="text-sm text-gray-500">Share this poll with others:</p>
                 <SharePoll pollId={pollId} pollTitle={poll.title} />
-                <Button className="mt-2" onClick={handleBack}>
-                  Return to polls
-                </Button>
+                <div className="flex gap-2 mt-2">
+                  <Button onClick={handleBack}>
+                    Return to polls
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link href="/leaderboard">
+                      <Trophy className="h-4 w-4 mr-1" />
+                      Leaderboard
+                    </Link>
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>

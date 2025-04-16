@@ -240,7 +240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user profile with points and achievements
-  app.get("/api/user-profile/:name", async (req, res) => {
+  app.get("/api/user-points/:name", async (req, res) => {
     try {
       const voterName = req.params.name;
       const userPoints = await storage.getUserPoints(voterName);
@@ -252,6 +252,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(userPoints);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch user profile" });
+    }
+  });
+  
+  // Get votes by user name
+  app.get("/api/user-votes/:name", async (req, res) => {
+    try {
+      const voterName = req.params.name;
+      // We need to get all votes and filter by voter name
+      const allPolls = await storage.getAllPolls();
+      const votes = [];
+      
+      for (const poll of allPolls) {
+        const pollVotes = await storage.getVotesByPoll(poll.id);
+        const userVotes = pollVotes.filter(vote => vote.voterName === voterName);
+        votes.push(...userVotes);
+      }
+      
+      res.json(votes);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch user votes" });
     }
   });
 
