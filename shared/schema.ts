@@ -24,7 +24,8 @@ export const votes = pgTable("votes", {
   pollId: integer("poll_id").notNull().references(() => polls.id),
   voterName: text("voter_name").notNull(),
   rankings: jsonb("rankings").notNull().$type<PollRanking[]>(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+  // Note: createdAt field is commented out as it doesn't exist in the actual database
+  // createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const userPoints = pgTable("user_points", {

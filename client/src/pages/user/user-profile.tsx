@@ -245,7 +245,7 @@ export default function UserProfile() {
                               </span>
                             </div>
                             <p className="text-xs text-gray-500">
-                              Voted on {new Date(vote.createdAt).toLocaleDateString()}
+                              Participated in poll
                             </p>
                           </div>
                           <Badge variant="outline" className="h-fit">
