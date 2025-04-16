@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { LogOut, User, ChevronDown, Menu, X } from "lucide-react";
+import { LogOut, User, ChevronDown, Menu, X, Trophy, Award } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,9 +60,17 @@ export default function Navbar() {
 
                 {/* User Navigation - Desktop */}
                 {!isAdmin && (
-                  <Link href="/">
-                    <Button variant="ghost" size="sm">Available Polls</Button>
-                  </Link>
+                  <div className="flex space-x-2">
+                    <Link href="/">
+                      <Button variant="ghost" size="sm">Available Polls</Button>
+                    </Link>
+                    <Link href="/leaderboard">
+                      <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                        <Trophy className="h-4 w-4" />
+                        Leaderboard
+                      </Button>
+                    </Link>
+                  </div>
                 )}
 
                 {/* User Menu - Desktop */}
@@ -91,6 +99,12 @@ export default function Navbar() {
               <div className="flex items-center space-x-4">
                 <Link href="/">
                   <Button variant="ghost">View Polls</Button>
+                </Link>
+                <Link href="/leaderboard">
+                  <Button variant="ghost" className="flex items-center gap-1">
+                    <Trophy className="h-4 w-4" />
+                    Leaderboard
+                  </Button>
                 </Link>
                 <Link href="/auth">
                   <Button variant="outline">Admin Login</Button>
@@ -145,15 +159,27 @@ export default function Navbar() {
                 )}
 
                 {!isAdmin && (
-                  <Link href="/">
-                    <Button 
-                      variant="ghost" 
-                      className="w-full justify-start mt-4" 
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Available Polls
-                    </Button>
-                  </Link>
+                  <div className="flex flex-col space-y-2 mt-4">
+                    <Link href="/">
+                      <Button 
+                        variant="ghost" 
+                        className="w-full justify-start" 
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Available Polls
+                      </Button>
+                    </Link>
+                    <Link href="/leaderboard">
+                      <Button 
+                        variant="ghost" 
+                        className="w-full justify-start flex items-center gap-2" 
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Trophy className="h-4 w-4" />
+                        Leaderboard
+                      </Button>
+                    </Link>
+                  </div>
                 )}
               </div>
             ) : (
@@ -165,6 +191,16 @@ export default function Navbar() {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     View Polls
+                  </Button>
+                </Link>
+                <Link href="/leaderboard">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start flex items-center gap-2"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Trophy className="h-4 w-4" />
+                    Leaderboard
                   </Button>
                 </Link>
                 <Link href="/auth">

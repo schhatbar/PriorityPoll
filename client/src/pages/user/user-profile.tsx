@@ -1,230 +1,282 @@
 import { useQuery } from "@tanstack/react-query";
-import { useParams, useLocation } from "wouter";
+import { useParams } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
+import { ArrowLeft, Trophy, Award, User, CheckCircle, MedalIcon, StarIcon } from "lucide-react";
 import Layout from "@/components/layout/layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Loader2, Trophy, Medal, Award, Star, ChevronLeft, User, Calendar, Activity, BarChart } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
-import { UserPoints } from "@shared/schema";
+import { Separator } from "@/components/ui/separator";
+import { UserPoints, Vote, Poll } from "@shared/schema";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function UserProfile() {
   const { name } = useParams<{ name: string }>();
-  const decodedName = decodeURIComponent(name);
-  const [_, setLocation] = useLocation();
-
-  const { data: userProfile, isLoading, error } = useQuery<UserPoints>({
-    queryKey: [`/api/user-profile/${decodedName}`],
+  const { toast } = useToast();
+  
+  const { data: userPoints, isLoading: isLoadingUser, error: userError } = useQuery<UserPoints>({
+    queryKey: ["/api/user-points", name],
+    enabled: !!name,
   });
 
-  if (isLoading) {
-    return (
-      <Layout>
-        <div className="flex justify-center items-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </Layout>
-    );
-  }
+  const { data: userVotes, isLoading: isLoadingVotes, error: votesError } = useQuery<Vote[]>({
+    queryKey: ["/api/user-votes", name],
+    enabled: !!name,
+  });
 
-  if (error || !userProfile) {
-    return (
-      <Layout>
-        <div className="text-center py-10">
-          <h2 className="text-xl font-semibold text-red-600">
-            {error ? `Error: ${error.message}` : `User profile for "${decodedName}" not found`}
-          </h2>
-          <p className="text-gray-500 mt-2 mb-4">
-            This user may not have participated in any polls yet.
-          </p>
-          <Button variant="outline" className="mt-2" onClick={() => setLocation("/leaderboard")}>
-            <ChevronLeft className="h-4 w-4 mr-2" />
-            Back to Leaderboard
-          </Button>
-        </div>
-      </Layout>
-    );
-  }
-
-  // Format dates
-  const formatDate = (dateString?: string | Date | null) => {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
+  if (userError || votesError) {
+    toast({
+      title: "Error",
+      description: "Failed to load user profile data",
+      variant: "destructive",
     });
+  }
+
+  const isLoading = isLoadingUser || isLoadingVotes;
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(part => part.charAt(0).toUpperCase())
+      .join('')
+      .substring(0, 2);
   };
 
-  // Calculate progress to next level
-  const pointsToNextLevel = 100; // Points needed per level
-  const currentLevelPoints = (userProfile.level - 1) * pointsToNextLevel;
-  const pointsInCurrentLevel = userProfile.points - currentLevelPoints;
-  const progressToNextLevel = Math.min(Math.round((pointsInCurrentLevel / pointsToNextLevel) * 100), 100);
+  const levelInfo = {
+    1: { name: "Beginner", threshold: 0, color: "bg-gray-200", next: 50 },
+    2: { name: "Regular Voter", threshold: 50, color: "bg-blue-200", next: 100 },
+    3: { name: "Active Contributor", threshold: 100, color: "bg-green-200", next: 200 },
+    4: { name: "Voting Expert", threshold: 200, color: "bg-purple-200", next: 500 },
+    5: { name: "Poll Master", threshold: 500, color: "bg-amber-200", next: 1000 },
+    6: { name: "Priority Legend", threshold: 1000, color: "bg-red-200", next: null },
+  };
 
-  // Get user initials for avatar
-  const initials = userProfile.voterName
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .substring(0, 2);
+  const getUserLevel = (points: number) => {
+    const levels = Object.entries(levelInfo).map(([level, info]) => ({
+      level: parseInt(level),
+      ...info,
+    }));
+    
+    const userLevel = levels
+      .filter(level => points >= level.threshold)
+      .sort((a, b) => b.level - a.level)[0];
+      
+    return userLevel;
+  };
 
-  // Get achievements and badges
-  const achievements = userProfile.achievements as string[] || [];
-  const badges = userProfile.badges as any[] || [];
+  const getProgressToNextLevel = (points: number, currentLevel: any) => {
+    if (!currentLevel.next) return 100; // Max level
+    
+    const progress = ((points - currentLevel.threshold) / 
+      (currentLevel.next - currentLevel.threshold)) * 100;
+    return Math.min(Math.max(progress, 0), 100);
+  };
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-6">
-        <Button variant="ghost" className="mb-6" onClick={() => setLocation("/leaderboard")}>
-          <ChevronLeft className="h-4 w-4 mr-2" />
-          Back to Leaderboard
-        </Button>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Profile Card */}
-          <div className="md:col-span-1">
-            <Card>
-              <CardHeader className="text-center">
-                <Avatar className="h-24 w-24 mx-auto mb-3 border-4 border-primary/10">
-                  <AvatarFallback className="bg-primary/20 text-primary text-3xl font-bold">
-                    {initials}
+      <div className="space-y-6">
+        <div className="flex items-center space-x-2">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/leaderboard">
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Back to Leaderboard
+            </Link>
+          </Button>
+        </div>
+
+        {isLoading ? (
+          <div className="space-y-6">
+            <div className="flex items-center space-x-4">
+              <Skeleton className="h-16 w-16 rounded-full" />
+              <div className="space-y-2">
+                <Skeleton className="h-6 w-[200px]" />
+                <Skeleton className="h-4 w-[150px]" />
+              </div>
+            </div>
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+              <Skeleton className="h-40 col-span-full" />
+              <Skeleton className="h-60" />
+              <Skeleton className="h-60" />
+              <Skeleton className="h-60" />
+            </div>
+          </div>
+        ) : userPoints ? (
+          <div className="space-y-6">
+            {/* User Header */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center space-x-4">
+                <Avatar className="h-16 w-16 border-2 border-primary/20">
+                  <AvatarFallback className="bg-primary/10 text-primary">
+                    {getInitials(userPoints.voterName)}
                   </AvatarFallback>
                 </Avatar>
-                <CardTitle className="text-2xl">{userProfile.voterName}</CardTitle>
-                <CardDescription>
-                  Member since {formatDate(userProfile.firstVoteDate)}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="bg-primary/5 rounded-lg p-3 text-center">
-                    <p className="text-sm text-gray-500">Level</p>
-                    <p className="text-2xl font-bold text-primary">{userProfile.level}</p>
-                  </div>
-                  <div className="bg-primary/5 rounded-lg p-3 text-center">
-                    <p className="text-sm text-gray-500">Points</p>
-                    <p className="text-2xl font-bold text-primary">{userProfile.points}</p>
-                  </div>
+                <div>
+                  <h1 className="text-2xl font-bold">{userPoints.voterName}</h1>
+                  <p className="text-muted-foreground">Joined {new Date(userPoints.createdAt).toLocaleDateString()}</p>
                 </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between mb-1 text-sm">
-                      <span>Progress to Level {userProfile.level + 1}</span>
-                      <span>{pointsInCurrentLevel}/{pointsToNextLevel}</span>
-                    </div>
-                    <Progress value={progressToNextLevel} className="h-2" />
-                  </div>
-                  
-                  <div className="flex justify-between py-2 border-t border-gray-100">
-                    <span className="text-gray-500 flex items-center">
-                      <Activity className="h-4 w-4 mr-2 text-gray-400" />
-                      Polls Voted
-                    </span>
-                    <span className="font-medium">{userProfile.votesCount}</span>
-                  </div>
-                  
-                  <div className="flex justify-between py-2 border-t border-gray-100">
-                    <span className="text-gray-500 flex items-center">
-                      <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                      Last Vote
-                    </span>
-                    <span className="font-medium">{formatDate(userProfile.lastVoteDate)}</span>
-                  </div>
+              </div>
+              
+              <div className="mt-4 md:mt-0">
+                <div className="flex items-center space-x-2">
+                  <Trophy className="h-5 w-5 text-yellow-500" />
+                  <span className="text-lg font-semibold">{userPoints.points} points</span>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-          
-          {/* Achievements and Badges */}
-          <div className="md:col-span-2">
-            <Card className="mb-6">
-              <CardHeader>
-                <div className="flex items-center">
-                  <Trophy className="h-5 w-5 text-amber-500 mr-2" />
-                  <CardTitle>Achievements</CardTitle>
-                </div>
-                <CardDescription>
-                  Achievements earned through participation
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {achievements.length === 0 ? (
-                  <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                    <Trophy className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-                    <p className="text-gray-500">No achievements yet</p>
-                    <p className="text-sm text-gray-400">Continue participating to earn achievements</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {achievements.map((achievement, index) => (
-                      <div 
-                        key={index}
-                        className="flex items-center p-3 bg-primary/5 rounded-lg"
-                      >
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mr-3">
-                          <Star className="h-5 w-5 text-primary" />
+              </div>
+            </div>
+
+            {/* Level Progress */}
+            {userPoints.points !== undefined && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center text-lg">
+                    <Award className="mr-2 h-5 w-5 text-purple-500" />
+                    Voter Level
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    const currentLevel = getUserLevel(userPoints.points);
+                    const progress = getProgressToNextLevel(userPoints.points, currentLevel);
+                    
+                    return (
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center">
+                            <Badge className={`${currentLevel.color} text-gray-800 mr-2`}>
+                              Level {currentLevel.level}
+                            </Badge>
+                            <span className="font-medium">{currentLevel.name}</span>
+                          </div>
+                          
+                          {currentLevel.next ? (
+                            <span className="text-sm text-gray-500">
+                              {userPoints.points} / {currentLevel.next} points
+                            </span>
+                          ) : (
+                            <Badge variant="secondary">Max Level</Badge>
+                          )}
                         </div>
-                        <div>
-                          <p className="font-medium">{achievement}</p>
-                          <p className="text-xs text-gray-500">Earned by participation</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <div className="flex items-center">
-                  <Medal className="h-5 w-5 text-amber-500 mr-2" />
-                  <CardTitle>Badges</CardTitle>
-                </div>
-                <CardDescription>
-                  Special badges and awards
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {badges.length === 0 ? (
-                  <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                    <Medal className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-                    <p className="text-gray-500">No badges yet</p>
-                    <p className="text-sm text-gray-400">Complete special actions to earn badges</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 gap-4">
-                    {badges.map((badge, index) => (
-                      <div 
-                        key={index}
-                        className="flex items-center p-4 border border-gray-100 rounded-lg hover:bg-gray-50"
-                      >
-                        <div className="h-12 w-12 rounded-full bg-amber-50 flex items-center justify-center mr-4 flex-shrink-0">
-                          {badge.icon === 'trophy' && <Trophy className="h-6 w-6 text-amber-500" />}
-                          {badge.icon === 'star' && <Star className="h-6 w-6 text-amber-500" />}
-                          {badge.icon === 'award' && <Award className="h-6 w-6 text-amber-500" />}
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">{badge.name}</p>
-                          <p className="text-sm text-gray-500">{badge.description}</p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            Earned on {formatDate(badge.earnedAt)}
+                        
+                        <Progress value={progress} className="h-2" />
+                        
+                        {currentLevel.next && (
+                          <p className="text-sm text-gray-500">
+                            {currentLevel.next - userPoints.points} more points until Level {currentLevel.level + 1}
                           </p>
-                        </div>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+              {/* Badges Card */}
+              <Card className="h-full">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center text-lg">
+                    <MedalIcon className="mr-2 h-5 w-5 text-yellow-500" />
+                    Badges Earned
+                  </CardTitle>
+                  <CardDescription>
+                    Special achievements unlocked
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {userPoints.badges && userPoints.badges.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-4">
+                      {userPoints.badges.map((badge, index) => (
+                        <div key={index} className="flex flex-col p-3 rounded-lg border">
+                          <div className="flex justify-between items-start">
+                            <div 
+                              className="p-2 rounded-full text-xl"
+                              dangerouslySetInnerHTML={{ __html: badge.icon }}
+                            />
+                            <Badge variant="outline" className="text-xs">
+                              {new Date(badge.earnedAt).toLocaleDateString()}
+                            </Badge>
+                          </div>
+                          <h3 className="font-medium mt-2">{badge.name}</h3>
+                          <p className="text-xs text-gray-500 mt-1">{badge.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center p-8 text-center h-40">
+                      <Award className="h-10 w-10 text-gray-300 mb-2" />
+                      <h3 className="text-lg font-medium">No badges yet</h3>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Continue voting in polls to earn badges!
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Participation History */}
+              <Card className="h-full">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center text-lg">
+                    <CheckCircle className="mr-2 h-5 w-5 text-green-500" />
+                    Poll Participation
+                  </CardTitle>
+                  <CardDescription>
+                    Polls this user has voted in
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {userVotes && userVotes.length > 0 ? (
+                    <div className="space-y-4">
+                      {userVotes.map((vote) => (
+                        <div key={vote.id} className="flex justify-between border-b pb-3 last:border-0">
+                          <div className="space-y-1">
+                            <div className="flex items-center space-x-2">
+                              <StarIcon className="h-4 w-4 text-amber-500" />
+                              <span className="font-medium">
+                                Poll #{vote.pollId}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500">
+                              Voted on {new Date(vote.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <Badge variant="outline" className="h-fit">
+                            {vote.rankings.length} options ranked
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center p-8 text-center h-40">
+                      <CheckCircle className="h-10 w-10 text-gray-300 mb-2" />
+                      <h3 className="text-lg font-medium">No votes yet</h3>
+                      <p className="text-sm text-gray-500 mt-1">
+                        This user hasn't participated in any polls
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center p-12 text-center">
+            <User className="h-16 w-16 text-gray-300 mb-4" />
+            <h2 className="text-2xl font-bold mb-2">User not found</h2>
+            <p className="text-gray-500 mb-6">
+              We couldn't find a user with the name "{name}"
+            </p>
+            <Button asChild>
+              <Link href="/leaderboard">
+                Return to Leaderboard
+              </Link>
+            </Button>
+          </div>
+        )}
       </div>
     </Layout>
   );
