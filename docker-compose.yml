@@ -9,15 +9,16 @@ services:
     container_name: priority-poll-app
     ports:
       - "5000:5000"
+    env_file:
+      - .env
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/priority_poll_db
-      - SESSION_SECRET=your_secure_production_secret
       - NODE_ENV=production
     depends_on:
       - db
     restart: unless-stopped
     volumes:
       - ./logs:/app/logs
+      - ./.env:/app/.env
     networks:
       - app-network
     healthcheck:

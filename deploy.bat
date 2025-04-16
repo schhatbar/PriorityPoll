@@ -27,6 +27,37 @@ echo.
 echo Building and starting containers...
 echo.
 
+REM Generate secure secrets
+echo Generating secure secrets...
+
+REM Try using bash script first
+where bash >nul 2>&1
+if %ERRORLEVEL% EQU 0 (
+  bash generate-secrets.sh
+) else (
+  REM Fall back to PowerShell script
+  echo Bash not available, using PowerShell secret generator
+  powershell -ExecutionPolicy Bypass -File .\generate-secrets.ps1
+)
+
+REM If both fail, create a basic .env file with default values
+if not exist .env (
+  echo Failed to generate secrets using bash or PowerShell.
+  echo Creating default .env file - please change these values later!
+  
+  echo # Database Configuration > .env
+  echo DATABASE_URL=postgresql://postgres:postgres@db:5432/priority_poll_db >> .env
+  echo. >> .env
+  echo # Session Secret (please change in production!) >> .env
+  echo SESSION_SECRET=default_session_secret_please_change_me >> .env
+  echo. >> .env
+  echo # Node Environment >> .env
+  echo NODE_ENV=production >> .env
+  
+  echo Default .env file created.
+  pause
+)
+
 REM Build and start the containers
 docker-compose up --build -d
 

@@ -32,6 +32,37 @@ Write-Host ""
 Write-Host "Building and starting containers..." -ForegroundColor Yellow
 Write-Host ""
 
+# Generate secure secrets
+Write-Host "Generating secure secrets..." -ForegroundColor Yellow
+try {
+    # Try using bash script first
+    if (Get-Command bash -ErrorAction SilentlyContinue) {
+        bash generate-secrets.sh
+    } else {
+        # Fall back to PowerShell script
+        Write-Host "Bash not available, using PowerShell secret generator" -ForegroundColor Yellow
+        . .\generate-secrets.ps1
+    }
+} catch {
+    Write-Host ""
+    Write-Host "ERROR: Failed to generate secrets." -ForegroundColor Red
+    Write-Host "Continuing with default secrets - please change them later!"
+    
+    # Create a basic .env file with default values
+    @"
+# Database Configuration
+DATABASE_URL=postgresql://postgres:postgres@db:5432/priority_poll_db
+
+# Session Secret (please change this in production!)
+SESSION_SECRET=default_session_secret_please_change_me
+
+# Node Environment
+NODE_ENV=production
+"@ | Out-File -FilePath ".env" -Encoding utf8
+    
+    Read-Host "Press Enter to continue"
+}
+
 # Build and start the containers
 try {
     docker-compose up --build -d
