@@ -84,6 +84,42 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
+      {/* Compact Hero Section for Mobile */}
+      <div className="md:hidden bg-gradient-to-b from-primary to-primary-800 p-4 sm:p-6">
+        <div className="max-w-md mx-auto text-center">
+          <div className="mb-4 bg-white/10 w-12 h-12 rounded-xl flex items-center justify-center mx-auto">
+            <BarChart3 className="h-6 w-6 text-white" />
+          </div>
+          <h1 className="text-xl sm:text-2xl font-bold text-white mb-3">
+            Priority Poll System
+          </h1>
+          <p className="text-white/90 text-sm mb-4 leading-relaxed">
+            A powerful tool for creating and participating in priority-based polls.
+          </p>
+          
+          <div className="flex justify-between items-center space-x-2 text-xs text-white/70">
+            <div className="text-center p-2">
+              <div className="bg-white/10 p-1.5 rounded-full mx-auto mb-1.5 w-8 h-8 flex items-center justify-center">
+                <CheckCircle2 className="h-4 w-4 text-white" />
+              </div>
+              <p>Priority Voting</p>
+            </div>
+            <div className="text-center p-2">
+              <div className="bg-white/10 p-1.5 rounded-full mx-auto mb-1.5 w-8 h-8 flex items-center justify-center">
+                <Users className="h-4 w-4 text-white" />
+              </div>
+              <p>Role-Based Access</p>
+            </div>
+            <div className="text-center p-2">
+              <div className="bg-white/10 p-1.5 rounded-full mx-auto mb-1.5 w-8 h-8 flex items-center justify-center">
+                <BarChart3 className="h-4 w-4 text-white" />
+              </div>
+              <p>Result Analysis</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    
       {/* Left side - Form */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-3 sm:p-4 md:p-8 lg:p-12">
         <Card className="w-full max-w-md shadow-lg border-gray-200/80">
@@ -273,42 +309,6 @@ export default function AuthPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
-
-      {/* Compact Hero Section for Mobile */}
-      <div className="md:hidden bg-gradient-to-b from-primary to-primary-800 p-4 sm:p-6">
-        <div className="max-w-md mx-auto text-center">
-          <div className="mb-4 bg-white/10 w-12 h-12 rounded-xl flex items-center justify-center mx-auto">
-            <BarChart3 className="h-6 w-6 text-white" />
-          </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white mb-3">
-            Priority Poll System
-          </h1>
-          <p className="text-white/90 text-sm mb-4 leading-relaxed">
-            A powerful tool for creating and participating in priority-based polls.
-          </p>
-          
-          <div className="flex justify-between items-center space-x-2 text-xs text-white/70">
-            <div className="text-center p-2">
-              <div className="bg-white/10 p-1.5 rounded-full mx-auto mb-1.5 w-8 h-8 flex items-center justify-center">
-                <CheckCircle2 className="h-4 w-4 text-white" />
-              </div>
-              <p>Priority Voting</p>
-            </div>
-            <div className="text-center p-2">
-              <div className="bg-white/10 p-1.5 rounded-full mx-auto mb-1.5 w-8 h-8 flex items-center justify-center">
-                <Users className="h-4 w-4 text-white" />
-              </div>
-              <p>Role-Based Access</p>
-            </div>
-            <div className="text-center p-2">
-              <div className="bg-white/10 p-1.5 rounded-full mx-auto mb-1.5 w-8 h-8 flex items-center justify-center">
-                <BarChart3 className="h-4 w-4 text-white" />
-              </div>
-              <p>Result Analysis</p>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Right side - Hero for Desktop */}

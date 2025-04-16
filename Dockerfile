@@ -29,14 +29,19 @@ COPY package*.json ./
 # This is needed because your app is importing some dev dependencies in production
 RUN npm ci
 
-# Copy built files from build stage
+# Copy all source files from build stage
 COPY --from=build /app/dist ./dist
+COPY --from=build /app/shared ./shared
+COPY --from=build /app/client/index.html ./client/index.html
+COPY --from=build /app/client/dist ./client/dist
 
 # Expose the port
 EXPOSE 5000
 
 # Environment variables
 ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+ENV PORT=5000
 
-# Run the application
-CMD ["node", "dist/index.js"]
+# Run the application with explicit ESM support
+CMD ["node", "--experimental-specifier-resolution=node", "dist/index.js"]
