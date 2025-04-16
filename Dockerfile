@@ -5,7 +5,7 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies with clean slate
+# Install all dependencies including development dependencies
 RUN npm ci
 
 # Copy application code
@@ -22,13 +22,14 @@ FROM node:20-alpine as production
 
 WORKDIR /app
 
-# Copy package files for production
+# Copy package files
 COPY package*.json ./
 
-# Install production dependencies only
-RUN npm ci --omit=dev
+# Install ALL dependencies (not just production)
+# This is needed because your app is importing some dev dependencies in production
+RUN npm ci
 
-# Copy built files from build stage - this includes both backend and frontend
+# Copy built files from build stage
 COPY --from=build /app/dist ./dist
 
 # Expose the port
