@@ -24,7 +24,7 @@ start-local.bat
 
 ### Or Simply Use Node Directly:
 ```
-node run-local.js
+node --experimental-modules run-local.js
 ```
 
 This will:
@@ -68,7 +68,7 @@ npm run db:push
 
 ### 5. Start the Application
 ```
-node run-local.js
+node --experimental-modules run-local.js
 ```
 
 ## Troubleshooting
@@ -77,6 +77,11 @@ node run-local.js
 - Check if PostgreSQL service is running
 - Verify your credentials in the `.env` file
 - Make sure the database exists
+
+### ESM Module Issues
+If you see errors related to ES modules or `require is not defined in ES module scope`:
+1. Make sure to use `node --experimental-modules run-local.js` instead of just `node run-local.js`
+2. Alternatively, you can rename the file to `run-local.cjs` to use CommonJS mode
 
 ### Port Already in Use
 If port 5000 is already in use:

@@ -1,4 +1,4 @@
 @echo off
 echo Starting Priority Polling Application...
-node run-local.js
+node --experimental-modules run-local.js
 pause
