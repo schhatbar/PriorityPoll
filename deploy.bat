@@ -53,6 +53,9 @@ if not exist .env (
   echo. >> .env
   echo # Node Environment >> .env
   echo NODE_ENV=production >> .env
+  echo. >> .env
+  echo # For Neon Database - forces standard connection mode instead of WebSocket >> .env
+  echo NEON_CONNECTION_TYPE=standard >> .env
   
   echo Default .env file created.
   pause

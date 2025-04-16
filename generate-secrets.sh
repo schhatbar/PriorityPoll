@@ -14,6 +14,9 @@ SESSION_SECRET=${SESSION_SECRET}
 
 # Node Environment
 NODE_ENV=production
+
+# For Neon Database - forces standard connection mode instead of WebSocket
+NEON_CONNECTION_TYPE=standard
 EOF
 
 echo "Secrets generated successfully!"

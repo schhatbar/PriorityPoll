@@ -58,6 +58,9 @@ SESSION_SECRET=default_session_secret_please_change_me
 
 # Node Environment
 NODE_ENV=production
+
+# For Neon Database - forces standard connection mode instead of WebSocket
+NEON_CONNECTION_TYPE=standard
 "@ | Out-File -FilePath ".env" -Encoding utf8
     
     Read-Host "Press Enter to continue"
