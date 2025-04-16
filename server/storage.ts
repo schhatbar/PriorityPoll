@@ -93,21 +93,17 @@ export class DatabaseStorage implements IStorage {
         results[option.text] = 0;
       });
       
-      // Prepare data for insertion
-      const data = {
-        title: insertPoll.title,
-        description: insertPoll.description || null,
-        options: insertPoll.options,
-        createdBy: insertPoll.createdBy, // Use camelCase as defined in the schema
-        results,
-        active: true
-      };
-      
-      console.log("Poll insertion data:", data);
-      
+      // Prepare data for insertion with explicit field mapping
       const [poll] = await db
         .insert(polls)
-        .values(data)
+        .values({
+          title: insertPoll.title,
+          description: insertPoll.description || null,
+          options: insertPoll.options,
+          createdBy: insertPoll.createdBy,
+          results,
+          active: true
+        })
         .returning();
       
       console.log("Poll created:", poll);
@@ -164,7 +160,11 @@ export class DatabaseStorage implements IStorage {
       // Create the vote
       const [newVote] = await db
         .insert(votes)
-        .values(vote) // This should use the correct column names based on the schema
+        .values({
+          pollId: vote.pollId,
+          voterName: vote.voterName,
+          rankings: vote.rankings
+        })
         .returning();
       
       console.log("Vote created:", newVote);
