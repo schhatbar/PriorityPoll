@@ -34,6 +34,7 @@ COPY --from=build /app/dist ./dist
 COPY --from=build /app/shared ./shared
 COPY --from=build /app/client/index.html ./client/index.html
 COPY --from=build /app/client/dist ./client/dist
+COPY --from=build /app/theme.json ./theme.json
 
 # Expose the port
 EXPOSE 5000
