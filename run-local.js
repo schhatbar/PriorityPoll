@@ -31,7 +31,8 @@ try {
 SESSION_SECRET=localdevelopmentsecret
 NODE_ENV=development
 NEON_CONNECTION_TYPE=standard
-PORT=5000`;
+PORT=5000
+HOST=127.0.0.1`;
     
     fs.writeFileSync(envPath, defaultEnv);
     dotenv.config({ path: envPath });

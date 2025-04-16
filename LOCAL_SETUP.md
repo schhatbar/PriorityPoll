@@ -114,6 +114,14 @@ The application is now configured to use the `sslmode` parameter in the connecti
    - `verify-ca`: Verify server certificate
    - `verify-full`: Verify server certificate and hostname
 
+### Host Binding Issues
+If you encounter issues with the server binding to network interfaces:
+
+1. The application now uses `127.0.0.1` (localhost) instead of `0.0.0.0` to avoid compatibility issues
+2. If you need to access the application from other devices on your network:
+   - Add `HOST=0.0.0.0` to your `.env` file (if your system supports it)
+   - Or, set up a reverse proxy like Nginx
+
 ## Default Admin Account
 - Username: `admin`
 - Password: `admin123`
