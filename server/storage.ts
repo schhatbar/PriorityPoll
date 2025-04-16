@@ -84,26 +84,38 @@ export class DatabaseStorage implements IStorage {
 
   // Poll operations
   async createPoll(insertPoll: InsertPoll): Promise<Poll> {
-    // Initialize empty results object based on options
-    const results: Record<string, number> = {};
-    const options = insertPoll.options as PollOption[];
-    options.forEach(option => {
-      results[option.text] = 0;
-    });
-    
-    const [poll] = await db
-      .insert(polls)
-      .values({
+    console.log("Creating poll with data:", insertPoll);
+    try {
+      // Initialize empty results object based on options
+      const results: Record<string, number> = {};
+      const options = insertPoll.options as PollOption[];
+      options.forEach(option => {
+        results[option.text] = 0;
+      });
+      
+      // Prepare data for insertion
+      const data = {
         title: insertPoll.title,
         description: insertPoll.description || null,
         options: insertPoll.options,
-        created_by: insertPoll.createdBy,
+        createdBy: insertPoll.createdBy, // Use camelCase as defined in the schema
         results,
         active: true
-      })
-      .returning();
-    
-    return poll;
+      };
+      
+      console.log("Poll insertion data:", data);
+      
+      const [poll] = await db
+        .insert(polls)
+        .values(data)
+        .returning();
+      
+      console.log("Poll created:", poll);
+      return poll;
+    } catch (error) {
+      console.error("Error creating poll:", error);
+      throw error;
+    }
   }
 
   async getPoll(id: number): Promise<Poll | undefined> {
@@ -148,46 +160,47 @@ export class DatabaseStorage implements IStorage {
   async createVote(vote: InsertVote): Promise<Vote> {
     console.log("Creating vote with data:", vote);
     
-    // Create the vote
-    const [newVote] = await db
-      .insert(votes)
-      .values({
-        poll_id: vote.pollId,
-        voter_name: vote.voterName,
-        rankings: vote.rankings
-      })
-      .returning();
-    
-    console.log("Vote created:", newVote);
-    
-    // Update poll results
-    const poll = await this.getPoll(vote.pollId);
-    if (poll) {
-      const results = { ...poll.results };
+    try {
+      // Create the vote
+      const [newVote] = await db
+        .insert(votes)
+        .values(vote) // This should use the correct column names based on the schema
+        .returning();
       
-      // Calculate points based on rankings (reverse order - highest rank gets most points)
-      const pointsForRank = (rank: number, totalOptions: number) => totalOptions - rank + 1;
+      console.log("Vote created:", newVote);
       
-      // Safely type the rankings array
-      const typedRankings = vote.rankings as PollRanking[];
-      const pollOptions = poll.options as PollOption[];
+      // Update poll results
+      const poll = await this.getPoll(vote.pollId);
+      if (poll) {
+        const results = { ...poll.results };
+        
+        // Calculate points based on rankings (reverse order - highest rank gets most points)
+        const pointsForRank = (rank: number, totalOptions: number) => totalOptions - rank + 1;
+        
+        // Safely type the rankings array
+        const typedRankings = vote.rankings as PollRanking[];
+        const pollOptions = poll.options as PollOption[];
+        
+        typedRankings.forEach(({ optionId, rank }) => {
+          const option = pollOptions.find(opt => opt.id === optionId);
+          if (option) {
+            const optionText = option.text;
+            const points = pointsForRank(rank, pollOptions.length);
+            results[optionText] = (results[optionText] || 0) + points;
+          }
+        });
+        
+        await this.updatePollResults(poll.id, results);
+        
+        // Award gamification points to the voter
+        await this.awardPointsForVoting(vote.voterName, poll);
+      }
       
-      typedRankings.forEach(({ optionId, rank }) => {
-        const option = pollOptions.find(opt => opt.id === optionId);
-        if (option) {
-          const optionText = option.text;
-          const points = pointsForRank(rank, pollOptions.length);
-          results[optionText] = (results[optionText] || 0) + points;
-        }
-      });
-      
-      await this.updatePollResults(poll.id, results);
-      
-      // Award gamification points to the voter
-      await this.awardPointsForVoting(vote.voterName, poll);
+      return newVote;
+    } catch (error) {
+      console.error("Error creating vote:", error);
+      throw error;
     }
-    
-    return newVote;
   }
   
   // Helper method for awarding points when voting
@@ -287,7 +300,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getVotesByPoll(pollId: number): Promise<Vote[]> {
-    return db.select().from(votes).where(eq(votes.poll_id, pollId));
+    return db.select().from(votes).where(eq(votes.pollId, pollId));
   }
 
   async hasUserVoted(pollId: number, voterName: string): Promise<boolean> {
