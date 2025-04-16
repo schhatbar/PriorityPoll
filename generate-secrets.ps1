@@ -11,19 +11,20 @@ function Get-RandomSecret {
 $SESSION_SECRET = Get-RandomSecret
 
 # Create .env file with the generated secrets
-@"
-# Database Configuration
-DATABASE_URL=postgresql://postgres:postgres@db:5432/priority_poll_db
-
-# Session Secret (automatically generated)
-SESSION_SECRET=$SESSION_SECRET
-
-# Node Environment
-NODE_ENV=production
-
-# For Neon Database - forces standard connection mode instead of WebSocket
-NEON_CONNECTION_TYPE=standard
-"@ | Out-File -FilePath ".env" -Encoding utf8
+Set-Content -Path ".env" -Value "# Database Configuration" -Encoding utf8
+Add-Content -Path ".env" -Value "DATABASE_URL=postgresql://postgres:postgres@db:5432/priority_poll_db" -Encoding utf8
+Add-Content -Path ".env" -Value ""
+Add-Content -Path ".env" -Value "# Session Secret (automatically generated)" -Encoding utf8
+Add-Content -Path ".env" -Value "SESSION_SECRET=$SESSION_SECRET" -Encoding utf8
+Add-Content -Path ".env" -Value ""
+Add-Content -Path ".env" -Value "# Node Environment" -Encoding utf8
+Add-Content -Path ".env" -Value "NODE_ENV=production" -Encoding utf8
+Add-Content -Path ".env" -Value ""
+Add-Content -Path ".env" -Value "# For Neon Database - forces standard connection mode instead of WebSocket" -Encoding utf8
+Add-Content -Path ".env" -Value "NEON_CONNECTION_TYPE=standard" -Encoding utf8
+Add-Content -Path ".env" -Value "# Server configuration" -Encoding utf8
+Add-Content -Path ".env" -Value "PORT=5000" -Encoding utf8
+Add-Content -Path ".env" -Value "HOST=0.0.0.0" -Encoding utf8
 
 Write-Host "Secrets generated successfully!" -ForegroundColor Green
 Write-Host "SESSION_SECRET has been set to a secure random value."
