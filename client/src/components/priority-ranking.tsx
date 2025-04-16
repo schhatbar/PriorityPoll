@@ -69,7 +69,7 @@ export default function PriorityRanking({ poll, onSubmit, isSubmitting }: Priori
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-3 sm:mb-4">
         <div className="flex items-center gap-1.5">
           <h3 className="text-sm font-medium text-gray-700">
             Prioritize Options
@@ -77,22 +77,22 @@ export default function PriorityRanking({ poll, onSubmit, isSubmitting }: Priori
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Info className="h-4 w-4 text-gray-400 cursor-help" />
+                <Info className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400 cursor-help" />
               </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs">
+              <TooltipContent side="top" className="max-w-xs text-xs sm:text-sm">
                 <p>Drag items to rank them by priority. The first item is considered most important.</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
-        <div className="flex items-center gap-2">
-          <MoveVertical className="h-4 w-4 text-gray-400" />
+        <div className="flex items-center gap-1 sm:gap-2 bg-gray-50 py-1 px-2 rounded-md sm:bg-transparent sm:p-0">
+          <MoveVertical className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400" />
           <span className="text-xs text-gray-500">Drag to reorder</span>
         </div>
       </div>
       
-      <Card className="bg-gray-50/50 border-dashed mb-6">
-        <CardContent className="p-4">
+      <Card className="bg-gray-50/50 border-dashed mb-4 sm:mb-6">
+        <CardContent className="p-2 sm:p-4">
           <ul ref={listRef} className="space-y-2">
             {rankedOptions.map((option, index) => (
               <li 
@@ -102,28 +102,29 @@ export default function PriorityRanking({ poll, onSubmit, isSubmitting }: Priori
                 onDragOver={(e) => handleDragOver(e, index)}
                 onDragEnd={handleDragEnd}
                 className={cn(
-                  "bg-white border rounded-md p-3 cursor-move flex items-center transition-all duration-200",
+                  "bg-white border rounded-md p-2 sm:p-3 cursor-move flex items-center transition-all duration-200",
                   draggedIndex === index 
                     ? "border-primary shadow-md scale-[1.01]" 
                     : "border-gray-200 hover:border-gray-300",
                   index === 0 && "bg-primary/5 border-primary/40"
                 )}
               >
-                <div className="mr-3 flex-shrink-0 text-gray-400 p-1 rounded-md hover:bg-gray-100">
-                  <GripVertical className="h-5 w-5" />
+                <div className="mr-2 sm:mr-3 flex-shrink-0 text-gray-400 p-1 rounded-md hover:bg-gray-100">
+                  <GripVertical className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
-                <div className="flex-grow">
-                  <div className="font-medium text-gray-800">{option.text}</div>
+                <div className="flex-grow min-w-0"> {/* min-width prevents overflow */}
+                  <div className="font-medium text-gray-800 text-sm sm:text-base truncate">{option.text}</div>
                 </div>
-                <div className="flex-shrink-0">
+                <div className="flex-shrink-0 ml-2">
                   {index === 0 ? (
-                    <Badge className="bg-primary/20 text-primary border-primary/20 hover:bg-primary/30">
-                      <Check className="h-3 w-3 mr-1" />
-                      Top Priority
+                    <Badge className="bg-primary/20 text-primary border-primary/20 hover:bg-primary/30 text-xs whitespace-nowrap">
+                      <Check className="h-3 w-3 mr-1 hidden xs:inline" />
+                      <span className="hidden xs:inline">Top Priority</span>
+                      <span className="xs:hidden">Top</span>
                     </Badge>
                   ) : (
                     <Badge variant="outline" className={cn(
-                      "bg-gray-50",
+                      "bg-gray-50 text-xs",
                       index < 3 && "border-primary/20 text-primary/80"
                     )}>
                       Rank {index + 1}
@@ -140,11 +141,12 @@ export default function PriorityRanking({ poll, onSubmit, isSubmitting }: Priori
         <Button 
           onClick={handleSubmit}
           disabled={isSubmitting}
-          className="relative overflow-hidden group"
+          size="sm"
+          className="relative overflow-hidden group text-sm h-9 sm:h-10 px-3 sm:px-4"
         >
           {isSubmitting ? (
             <span className="flex items-center">
-              <span className="animate-spin mr-2 h-4 w-4 border-2 border-white border-opacity-20 border-t-white rounded-full"></span>
+              <span className="animate-spin mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 border-2 border-white border-opacity-20 border-t-white rounded-full"></span>
               Submitting...
             </span>
           ) : (
