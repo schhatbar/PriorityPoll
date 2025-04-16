@@ -135,6 +135,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Submit a vote
   app.post("/api/votes", async (req, res) => {
     try {
+      console.log("Vote submission request:", req.body);
+      
       const pollId = parseInt(req.body.pollId);
       if (isNaN(pollId)) {
         return res.status(400).json({ message: "Invalid poll ID" });
@@ -162,20 +164,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Validate vote
-      const validatedData = insertVoteSchema.parse({
-        pollId,
-        voterName,
-        rankings: req.body.rankings
-      });
-      
-      const vote = await storage.createVote(validatedData);
-      res.status(201).json(vote);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ message: "Validation error", errors: error.errors });
-      } else {
-        res.status(500).json({ message: "Failed to submit vote" });
+      console.log("Validating vote data:", { pollId, voterName, rankings: req.body.rankings });
+      try {
+        const validatedData = insertVoteSchema.parse({
+          pollId,
+          voterName,
+          rankings: req.body.rankings
+        });
+        
+        console.log("Validated data:", validatedData);
+        const vote = await storage.createVote(validatedData);
+        res.status(201).json(vote);
+      } catch (validationError) {
+        console.error("Validation error:", validationError);
+        if (validationError instanceof z.ZodError) {
+          return res.status(400).json({ message: "Validation error", errors: validationError.errors });
+        }
+        throw validationError;
       }
+    } catch (error) {
+      console.error("Error submitting vote:", error);
+      res.status(500).json({ message: "Failed to submit vote", error: error.message });
     }
   });
 
@@ -188,14 +197,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const { voterName } = req.query;
+      console.log("Checking vote status for:", { pollId, voterName });
+      
       if (!voterName || typeof voterName !== 'string') {
         return res.status(400).json({ message: "Please provide a name to check vote status" });
       }
       
-      const hasVoted = await storage.hasUserVoted(pollId, voterName);
-      res.json({ hasVoted });
+      try {
+        const hasVoted = await storage.hasUserVoted(pollId, voterName);
+        console.log("Vote status result:", { hasVoted });
+        res.json({ hasVoted });
+      } catch (checkError) {
+        console.error("Error checking vote status:", checkError);
+        throw checkError;
+      }
     } catch (error) {
-      res.status(500).json({ message: "Failed to check vote status" });
+      console.error("Error in has-voted endpoint:", error);
+      res.status(500).json({ message: "Failed to check vote status", error: error.message });
     }
   });
 
