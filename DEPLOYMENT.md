@@ -15,6 +15,7 @@ Run the provided build script:
 
 #### For Linux/Mac:
 ```bash
+chmod +x docker-build.sh
 ./docker-build.sh
 ```
 
@@ -28,7 +29,15 @@ deploy.bat
 .\deploy.ps1
 ```
 
-This will automatically:
+The script is environment-aware and will:
+
+**In Replit Environment:**
+1. Detect it's running in Replit
+2. Skip Docker-related operations
+3. Provide guidance specific to the Replit environment
+4. Display access information for the Replit app
+
+**In Local/Server Environment:**
 1. Check if Docker is installed and running
 2. Ensure theme.json exists (creates it if missing)
 3. Build the application Docker image
@@ -138,6 +147,23 @@ You can modify environment variables in the `docker-compose.yml` file, including
 - `DATABASE_URL`: Database connection string
 - `SESSION_SECRET`: Secret key for session management
 - Other environment variables as needed
+
+## Replit Deployment
+
+This application is also designed to run natively in Replit without Docker:
+
+1. The project is pre-configured to run in Replit's Node.js environment
+2. PostgreSQL is already configured in the Replit environment
+3. To deploy:
+   - Click the "Run" button in Replit to start the application
+   - The application will be available at your Replit URL
+   - No Docker configuration is required in Replit
+
+### Replit DB Connection
+
+In Replit, the PostgreSQL database is automatically provisioned and the connection details are available through environment variables:
+- The connection string is available in the `DATABASE_URL` environment variable
+- Individual connection parameters are available in `PGHOST`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`, and `PGPORT`
 
 ## Support
 
