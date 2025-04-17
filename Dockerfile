@@ -50,6 +50,10 @@ ENV PORT=5000
 # Copy the entrypoint script
 COPY entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
+RUN echo "Contents of /app directory:" && ls -la /app
+
+# Make sure the script has proper line endings (in case it was created on Windows)
+RUN sed -i 's/\r$//' ./entrypoint.sh
 
 # Use the entrypoint script to ensure theme.json exists
-ENTRYPOINT ["/app/entrypoint.sh"]
+ENTRYPOINT ["sh", "./entrypoint.sh"]

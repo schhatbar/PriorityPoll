@@ -133,6 +133,36 @@ If you see an error like `Error: Failed to read theme file: ENOENT: no such file
    docker-compose up --build -d
    ```
 
+### Entrypoint script error
+
+If you see an error like `exec /app/entrypoint.sh: no such file or directory`:
+
+1. This is a path resolution issue with the entrypoint script.
+
+2. You can fix this by editing the Dockerfile and changing:
+   ```
+   ENTRYPOINT ["/app/entrypoint.sh"]
+   ```
+   to:
+   ```
+   ENTRYPOINT ["sh", "./entrypoint.sh"]
+   ```
+
+3. Make sure entrypoint.sh has proper line endings for Unix (LF, not CRLF):
+   ```bash
+   # For Linux/Mac:
+   dos2unix entrypoint.sh
+   
+   # Or using sed:
+   sed -i 's/\r$//' entrypoint.sh
+   ```
+
+4. Rebuild the application:
+   ```
+   docker-compose down
+   docker-compose up --build -d
+   ```
+
 ### Rebuilding after code changes
 
 If you've made code changes and need to rebuild:

@@ -23,6 +23,7 @@ services:
       - ./logs:/app/logs
       - ./.env:/app/.env
       - ./theme.json:/app/theme.json
+      - ./entrypoint.sh:/app/entrypoint.sh
     networks:
       - app-network
     healthcheck:
