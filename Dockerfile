@@ -44,5 +44,9 @@ ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=5000
 
-# Run the application with explicit ESM support
-CMD ["node", "--experimental-specifier-resolution=node", "dist/index.js"]
+# Copy the entrypoint script
+COPY entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
+# Use the entrypoint script to ensure theme.json exists
+ENTRYPOINT ["/app/entrypoint.sh"]
