@@ -16,7 +16,6 @@ FROM base as build
 
 # Build the application
 RUN npm run build
-RUN ls -la /app/client/dist || echo "client/dist directory not found after build"
 
 # Production stage
 FROM node:20-alpine as production
@@ -37,8 +36,8 @@ COPY theme.json ./theme.json
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/shared ./shared
 
-# First check the existence of client directories
-COPY --from=build /app/client ./client || echo "Failed to copy client directory"
+# Copy client directory
+COPY --from=build /app/client ./client
 
 # Expose the port
 EXPOSE 5000
