@@ -9,7 +9,14 @@ This guide provides instructions for deploying the Priority Polling Application 
 
 ## Deployment Options
 
-### Option 1: Using the Quick Deploy Scripts (Recommended)
+### Option 1: Using the Automated Build Script (Recommended)
+
+Run the provided build script:
+
+#### For Linux/Mac:
+```bash
+./docker-build.sh
+```
 
 #### For Windows Command Prompt:
 ```
@@ -23,9 +30,10 @@ deploy.bat
 
 This will automatically:
 1. Check if Docker is installed and running
-2. Build the application Docker image
-3. Start the application, PostgreSQL database, and pgAdmin
-4. Display access information when complete
+2. Ensure theme.json exists (creates it if missing)
+3. Build the application Docker image
+4. Start the application, PostgreSQL database, and pgAdmin
+5. Display access information when complete
 
 ### Option 2: Manual Deployment
 
@@ -89,6 +97,32 @@ Check the database logs:
 ```
 docker-compose logs db
 ```
+
+### Missing theme.json error
+
+If you see an error like `Error: Failed to read theme file: ENOENT: no such file or directory, open './theme.json'`:
+
+1. Create a theme.json file in the project root with the following content:
+   ```json
+   {
+     "variant": "professional",
+     "primary": "hsl(222.2 47.4% 11.2%)",
+     "appearance": "light",
+     "radius": 0.5
+   }
+   ```
+
+2. Update your docker-compose.yml to mount this file:
+   ```yaml
+   volumes:
+     - ./theme.json:/app/theme.json
+   ```
+
+3. Rebuild the application:
+   ```
+   docker-compose down
+   docker-compose up --build -d
+   ```
 
 ### Rebuilding after code changes
 

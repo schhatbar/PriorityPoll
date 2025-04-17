@@ -16,6 +16,7 @@ FROM base as build
 
 # Build the application
 RUN npm run build
+RUN ls -la /app/client/dist || echo "client/dist directory not found after build"
 
 # Production stage
 FROM node:20-alpine as production
@@ -29,12 +30,15 @@ COPY package*.json ./
 # This is needed because your app is importing some dev dependencies in production
 RUN npm ci
 
+# Copy the theme file directly from the source
+COPY theme.json ./theme.json
+
 # Copy all source files from build stage
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/shared ./shared
-COPY --from=build /app/client/index.html ./client/index.html
-COPY --from=build /app/client/dist ./client/dist
-COPY --from=build /app/theme.json ./theme.json
+
+# First check the existence of client directories
+COPY --from=build /app/client ./client || echo "Failed to copy client directory"
 
 # Expose the port
 EXPOSE 5000

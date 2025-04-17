@@ -42,9 +42,42 @@ A dynamic polling platform that enables complex voting mechanisms with advanced 
    npm run dev
    ```
 
-### Production Deployment
+### Docker Deployment
 
-For detailed deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md).
+The easiest way to deploy the application is using Docker:
+
+1. Make sure Docker and Docker Compose are installed
+2. Run the automated build script:
+   ```
+   ./docker-build.sh
+   ```
+   
+This script will:
+- Check if Docker is running
+- Ensure theme.json exists (creates it if missing)
+- Build the Docker images
+- Start the containers
+- Display helpful commands for managing the deployment
+
+Alternatively, you can run the Docker commands manually:
+
+```bash
+# Build the Docker images
+docker-compose build
+
+# Start the application
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop the application
+docker-compose down
+```
+
+The application will be available at http://localhost:5000 and the PostgreSQL admin interface at http://localhost:5050.
+
+For more detailed deployment instructions including cloud deployment options, see [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## User Guide
 
