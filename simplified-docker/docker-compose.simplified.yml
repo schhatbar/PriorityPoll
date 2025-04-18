@@ -4,7 +4,8 @@ services:
   # Node.js + React Application
   app:
     build:
-      context: .
+      context: ..
+      dockerfile: ./simplified-docker/Dockerfile.simplified
       target: production
     container_name: priority-poll-app
     ports:
@@ -21,8 +22,6 @@ services:
     volumes:
       - ./logs:/app/logs
       - ./.env:/app/.env
-      - ./theme.json:/app/theme.json
-      - ./entrypoint.sh:/app/entrypoint.sh
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000/api/health"]
       interval: 30s

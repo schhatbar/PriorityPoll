@@ -43,19 +43,15 @@ if [ $? -ne 0 ]; then
 fi
 print_success "Docker is running"
 
-# Make sure theme.json exists
-print_heading "CHECKING THEME.JSON"
-if [ ! -f theme.json ]; then
-    echo "❗ theme.json file not found. Creating default theme file..."
-    echo '{
-  "variant": "professional",
-  "primary": "hsl(222.2 47.4% 11.2%)",
-  "appearance": "light",
-  "radius": 0.5
-}' > theme.json
-    print_success "Created default theme.json file"
+# No need to check for theme.json as it's created in the Dockerfile
+print_heading "CHECKING DIRECTORIES"
+# Make sure logs directory exists
+if [ ! -d logs ]; then
+    echo "❗ logs directory not found. Creating directory..."
+    mkdir -p logs
+    print_success "Created logs directory"
 else
-    print_success "theme.json file found"
+    print_success "logs directory found"
 fi
 
 # Create .env file if it doesn't exist
@@ -88,6 +84,7 @@ fi
 start_time=$(date +%s)
 
 # Build with error handling
+cd simplified-docker
 docker-compose -f docker-compose.simplified.yml build --no-cache
 if [ $? -ne 0 ]; then
     # Restore node_modules if there was an error
@@ -113,12 +110,17 @@ print_success "Docker image built successfully in ${build_minutes}m ${build_seco
 # Start the containers
 print_heading "STARTING CONTAINER"
 print_step "Starting Docker container..."
+# We're already in the simplified-docker directory from the build step
 docker-compose -f docker-compose.simplified.yml up -d
 if [ $? -ne 0 ]; then
+    # Go back to the root directory before exiting
+    cd ..
     handle_error "Failed to start Docker container. Please check the error messages above."
 fi
 
 print_success "Docker container started successfully"
+# Go back to the root directory
+cd ..
 
 # Report status and provide useful commands
 print_heading "APPLICATION STATUS"
@@ -127,9 +129,9 @@ echo ""
 echo "📊 Access the application at: http://localhost:5000"
 echo ""
 echo "💡 Useful commands:"
-echo "   - View logs: docker-compose -f docker-compose.simplified.yml logs -f"
-echo "   - Stop application: docker-compose -f docker-compose.simplified.yml down"
-echo "   - Restart application: docker-compose -f docker-compose.simplified.yml restart"
+echo "   - View logs: cd simplified-docker && docker-compose -f docker-compose.simplified.yml logs -f"
+echo "   - Stop application: cd simplified-docker && docker-compose -f docker-compose.simplified.yml down"
+echo "   - Restart application: cd simplified-docker && docker-compose -f docker-compose.simplified.yml restart"
 echo ""
 echo "👤 Default admin credentials:"
 echo "   - Username: admin"

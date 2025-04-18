@@ -95,9 +95,13 @@ The system comes with a default admin account:
 
 If you see an error related to theme.json, run the build script again which will create the file automatically.
 
-### Entrypoint script error
+### Docker build fails with "failed to calculate checksum" errors
 
-If you encounter entrypoint script errors, make sure the script has Unix line endings (LF, not CRLF).
+If you encounter errors like `failed to calculate checksum` or `not found` during build:
+
+- This version has the entrypoint script directly embedded in the Dockerfile
+- No external entrypoint.sh file is required
+- Theme.json is also created directly in the container
 
 ## Database Schema
 
